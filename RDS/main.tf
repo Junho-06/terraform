@@ -1,5 +1,5 @@
 resource "aws_rds_cluster" "aurora-mysql-cluster" {
-  count = var.create_aurora_mysql_cluster == true ? 1 : 0
+  count = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
 
   cluster_identifier = var.aurora-mysql.cluster_name
 
@@ -32,7 +32,7 @@ resource "aws_rds_cluster" "aurora-mysql-cluster" {
   enabled_cloudwatch_logs_exports = var.aurora-mysql.enabled_logs_type
 }
 resource "aws_rds_cluster_instance" "aurora-mysql-instance-1" {
-  count      = var.create_aurora_mysql_cluster == true ? 1 : 0
+  count      = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
   depends_on = [aws_rds_cluster.aurora-mysql-cluster[0]]
 
   identifier         = var.aurora-mysql.instance1_name
@@ -47,7 +47,7 @@ resource "aws_rds_cluster_instance" "aurora-mysql-instance-1" {
   performance_insights_enabled = !startswith(var.aurora-mysql.instance_type, "db.t")
 }
 resource "aws_rds_cluster_instance" "aurora-mysql-instance-2" {
-  count      = var.create_aurora_mysql_cluster == true ? 1 : 0
+  count      = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
   depends_on = [aws_rds_cluster.aurora-mysql-cluster[0]]
 
   identifier         = var.aurora-mysql.instance2_name
@@ -62,7 +62,7 @@ resource "aws_rds_cluster_instance" "aurora-mysql-instance-2" {
   performance_insights_enabled = !startswith(var.aurora-mysql.instance_type, "db.t")
 }
 resource "aws_rds_cluster" "aurora-postgres-cluster" {
-  count = var.create_aurora_postgres_cluster == true ? 1 : 0
+  count = var.db_engine.create_aurora_postgres_cluster == true ? 1 : 0
 
   cluster_identifier = var.aurora-postgres.cluster_name
 
@@ -93,7 +93,7 @@ resource "aws_rds_cluster" "aurora-postgres-cluster" {
   enabled_cloudwatch_logs_exports = var.aurora-postgres.enabled_logs_type
 }
 resource "aws_rds_cluster_instance" "aurora-postgres-instance-1" {
-  count      = var.create_aurora_postgres_cluster == true ? 1 : 0
+  count      = var.db_engine.create_aurora_postgres_cluster == true ? 1 : 0
   depends_on = [aws_rds_cluster.aurora-postgres-cluster[0]]
 
   identifier         = var.aurora-postgres.instance1_name
@@ -108,7 +108,7 @@ resource "aws_rds_cluster_instance" "aurora-postgres-instance-1" {
   performance_insights_enabled = !startswith(var.aurora-postgres.instance_type, "db.t")
 }
 resource "aws_rds_cluster_instance" "aurora-postgres-instance-2" {
-  count      = var.create_aurora_postgres_cluster == true ? 1 : 0
+  count      = var.db_engine.create_aurora_postgres_cluster == true ? 1 : 0
   depends_on = [aws_rds_cluster.aurora-postgres-cluster[0]]
 
   identifier         = var.aurora-postgres.instance2_name
@@ -123,15 +123,15 @@ resource "aws_rds_cluster_instance" "aurora-postgres-instance-2" {
   performance_insights_enabled = !startswith(var.aurora-postgres.instance_type, "db.t")
 }
 resource "aws_security_group" "aurora-mysql-sg" {
-  count       = var.create_aurora_mysql_cluster == true ? 1 : 0
+  count       = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
   name        = "aurora-mysql-sg"
   description = "aurora mysql security group"
-  vpc_id      = var.vpc_id
+  vpc_id      = var.network.vpc_id
   ingress {
     from_port   = var.aurora-mysql.port
     to_port     = var.aurora-mysql.port
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = [var.network.vpc_cidr]
   }
   egress {
     from_port   = 0
@@ -141,15 +141,15 @@ resource "aws_security_group" "aurora-mysql-sg" {
   }
 }
 resource "aws_security_group" "aurora-postgres-sg" {
-  count       = var.create_aurora_postgres_cluster == true ? 1 : 0
+  count       = var.db_engine.create_aurora_postgres_cluster == true ? 1 : 0
   name        = "aurora-postgres-sg"
   description = "aurora postgres security group"
-  vpc_id      = var.vpc_id
+  vpc_id      = var.network.vpc_id
   ingress {
     from_port   = var.aurora-postgres.port
     to_port     = var.aurora-postgres.port
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = [var.network.vpc_cidr]
   }
   egress {
     from_port   = 0
@@ -205,5 +205,5 @@ resource "aws_iam_role_policy_attachment" "monitoring_role_policy_attach" {
 resource "aws_db_subnet_group" "rds_subnet_group" {
   name        = "rds-subnet-group"
   description = "rds subnet group"
-  subnet_ids  = var.database_subnet_ids
+  subnet_ids  = var.network.database_subnet_ids
 }

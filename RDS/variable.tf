@@ -1,9 +1,19 @@
-variable "create_aurora_mysql_cluster" { default = true }
-variable "create_aurora_postgres_cluster" { default = true }
+variable "db_engine" {
+  type = any
+  default = {
+    create_aurora_mysql_cluster    = true
+    create_aurora_postgres_cluster = true
+  }
+}
 
-variable "vpc_id" { default = "vpc-0ad2361ec8f22f77b" }
-variable "vpc_cidr" { default = "10.0.0.0/16" }
-variable "database_subnet_ids" { default = ["subnet-08c20dde784e83ca0", "subnet-0b015f8afc6edc03e"] }
+variable "network" {
+  type = any
+  default = {
+    vpc_id              = "vpc-0ad2361ec8f22f77b"
+    vpc_cidr            = "10.0.0.0/16"
+    database_subnet_ids = ["subnet-08c20dde784e83ca0", "subnet-0b015f8afc6edc03e"]
+  }
+}
 
 variable "aurora-mysql" {
   type        = any
