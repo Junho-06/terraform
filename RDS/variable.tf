@@ -36,13 +36,11 @@ variable "aurora-mysql" {
 
     backup_retention_period = 7
     skip_final_snapshot     = true
-    copy_tags_to_snapshot   = false
+    copy_tags_to_snapshot   = true
 
     backtrack_window = 60 * 60 * 24
 
     enabled_logs_type = ["error", "general", "slowquery", "audit", "iam-db-auth-error"]
-
-    performance_insights_enabled = true
   }
 }
 
@@ -67,10 +65,8 @@ variable "aurora-postgres" {
 
     backup_retention_period = 7
     skip_final_snapshot     = true
-    copy_tags_to_snapshot   = false
+    copy_tags_to_snapshot   = true
 
     enabled_logs_type = ["postgresql", "iam-db-auth-error"]
-
-    performance_insights_enabled = true
   }
 }
