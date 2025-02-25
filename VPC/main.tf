@@ -7,6 +7,8 @@ resource "aws_vpc" "main-vpc" {
   cidr_block           = var.vpc.cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
+
+  depends_on = [aws_cloudwatch_log_group.vpc-flowlog-loggroup[0]]
 }
 resource "aws_subnet" "public-a" {
   vpc_id            = aws_vpc.main-vpc.id
