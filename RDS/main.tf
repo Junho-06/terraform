@@ -202,6 +202,12 @@ resource "aws_iam_role_policy_attachment" "monitoring_role_policy_attach" {
   role       = aws_iam_role.monitoring_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
+resource "aws_iam_role_policy_attachments_exclusive" "delete-iam-policy" {
+  role_name = aws_iam_role.monitoring_role.name
+  policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+  ]
+}
 resource "aws_db_subnet_group" "rds_subnet_group" {
   name        = "rds-subnet-group"
   description = "rds subnet group"
