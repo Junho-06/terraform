@@ -1,12 +1,12 @@
 variable "key" {
   type        = string
   description = "for bastion key pair"
-  default     = "skills" # 미리 key pair가 생성 되어있어야 하고, key pair name 입력력
+  default     = "skills" # 미리 key pair가 생성 되어있어야 하고, key pair name 입력
 }
 
 variable "ec2" {
 
-  # No module named 'requests' 발생 시 local에 pip3 install requests 가 필요함함
+  # No module named 'requests' 발생 시 local에 pip3 install requests 가 필요함
 
   type        = any
   description = "Variables for EC2"
