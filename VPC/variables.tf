@@ -37,7 +37,7 @@ variable "vpc" {
     vpc_endpoints = [
       "s3",
       "dynamodb",
-      "sts",
+      #"sts",
       # ecr.api",
       # ecr.dkr",
       # secretsmanager",
