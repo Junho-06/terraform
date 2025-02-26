@@ -45,7 +45,7 @@ resource "aws_kms_key" "ecr-cmk" {
   deletion_window_in_days = 7
   policy = jsonencode({
     Version = "2012-10-17"
-    Id      = "rds-key"
+    Id      = "ecr-key"
     Statement = [
       {
         Sid    = "Enable IAM User Permissions"
