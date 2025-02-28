@@ -18,18 +18,20 @@ variable "alb" {
 
     # Accesslog는 bucket이 s3 관리형 키를 사용해서 암호화 해야함 (CMK는 안됨)
     accesslog = {
-      enabled       = true
-      bucket_name   = "mytestbucket-20250207-2" # access log와 connection log는 같은 버킷 사용해야함
-      bucket_prefix = "accesslog"               # 끝에 / 포함 하면 안됨
+      enabled                = true
+      bucket_name            = "mytestbucket-20250207-2" # access log와 connection log는 같은 버킷 사용해야함
+      bucket_prefix          = "accesslog"               # 끝에 / 포함 하면 안됨
+      dest_bucket_has_policy = true
     }
 
-    # !!! Bucket 정책 덮어 쓰기 주의 !!!
+    # !!! Bucket 정책 덮어 쓰기 주의 !!! (dest_bucket_has_policy)
 
     # Connectionlog도 bucket이 s3 관리형 키를 사용해서 암호화 해야함 (CMK는 안됨)
     connectionlog = {
-      enabled       = true
-      bucket_name   = "mytestbucket-20250207-2" # access log와 connection log는 같은 버킷 사용해야함
-      bucket_prefix = "connectionlog"           # 끝에 / 포함 하면 안됨
+      enabled                = true
+      bucket_name            = "mytestbucket-20250207-2" # access log와 connection log는 같은 버킷 사용해야함
+      bucket_prefix          = "connectionlog"           # 끝에 / 포함 하면 안됨
+      dest_bucket_has_policy = true
     }
 
     listener_protocol = "HTTP" # HTTPS

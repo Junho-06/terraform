@@ -72,31 +72,33 @@ resource "aws_lb_target_group" "alb_target_group" {
 }
 
 data "aws_region" "region" {}
+data "aws_s3_bucket_policy" "existing_policy" {
+  count = var.alb.accesslog.dest_bucket_has_policy || var.alb.connectionlog.dest_bucket_has_policy ? 1 : 0
+
+  bucket = var.alb.accesslog.enabled ? var.alb.accesslog.bucket_name : var.alb.connectionlog.bucket_name
+}
 resource "aws_s3_bucket_policy" "merged_policy" {
   count  = var.alb.accesslog.enabled || var.alb.connectionlog.enabled ? 1 : 0
   bucket = var.alb.accesslog.enabled == true && var.alb.accesslog.bucket_name != "" ? var.alb.accesslog.bucket_name : var.alb.connectionlog.bucket_name
 
-  policy = data.aws_iam_policy_document.alb-log_policy.json
-}
-data "aws_iam_policy_document" "alb-log_policy" {
-  statement {
-    sid = "AWSLogDeliveryWrite"
-
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${local.elb_service_accounts[data.aws_region.region.name]}:root"]
-    }
-
-    effect = "Allow"
-
-    actions = [
-      "s3:PutObject",
-    ]
-
-    resources = [
-      "arn:aws:s3:::${var.alb.accesslog.enabled == true && var.alb.accesslog.bucket_name != "" ? var.alb.accesslog.bucket_name : var.alb.connectionlog.bucket_name}/*",
-    ]
-  }
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : concat(can(jsondecode(data.aws_s3_bucket_policy.existing_policy[0].policy)["Statement"]) ? jsondecode(data.aws_s3_bucket_policy.existing_policy[0].policy)["Statement"] : [],
+      [
+        {
+          "Sid" : "AWSLogDeliveryWrite",
+          "Effect" : "Allow",
+          "Principal" : {
+            "AWS" : "arn:aws:iam::${local.elb_service_accounts[data.aws_region.region.name]}:root"
+          },
+          "Action" : [
+            "s3:PutObject"
+          ],
+          "Resource" : "arn:aws:s3:::${var.alb.accesslog.enabled == true && var.alb.accesslog.bucket_name != "" ? var.alb.accesslog.bucket_name : var.alb.connectionlog.bucket_name}/*",
+        }
+      ]
+    )
+  })
 }
 resource "aws_security_group" "alb-sg" {
   name   = "${var.alb.name}-sg"
