@@ -29,14 +29,14 @@ resource "aws_cloudfront_distribution" "cf" {
     }
   }
   dynamic "origin" {
-    for_each = each.value.s3_origins
+    for_each = var.cf.s3_origins
     content {
       origin_id   = origin.key
       domain_name = origin.value.domain_name
       s3_origin_config {
         origin_access_identity = ""
       }
-      origin_access_control_id = aws_cloudfront_origin_access_control.oac[each.key].id
+      origin_access_control_id = aws_cloudfront_origin_access_control.oac[origin.key].id
     }
   }
 
@@ -50,7 +50,7 @@ resource "aws_cloudfront_distribution" "cf" {
   }
 
   dynamic "ordered_cache_behavior" {
-    for_each = each.value.cache_behavior
+    for_each = var.cf.cache_behavior
     content {
       path_pattern             = ordered_cache_behavior.value.path_pattern
       target_origin_id         = ordered_cache_behavior.value.origin_id

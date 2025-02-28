@@ -12,8 +12,8 @@ variable "cf" {
     default_root_object = null # "index.html"
 
     custom_origins = {
-      alb_1 = {
-        domain_name = "myalb.us-east-1.elb.amazonaws.com"
+      alb = {
+        domain_name = "skills-alb-1408671190.ap-northeast-2.elb.amazonaws.com"
         protocol    = "http-only"
 
         connection_timeout = 10
@@ -23,8 +23,8 @@ variable "cf" {
     }
 
     s3_origins = {
-      s3_1 = {
-        domain_name = "mybucket.s3.us-east-1.amazonaws.com" # BUCKET_NAME.s3.REGION.amazonaws.com
+      s3 = {
+        domain_name = "mytestbucket-20250207-1.s3.ap-northeast-2.amazonaws.com" # BUCKET_NAME.s3.REGION.amazonaws.com
       }
     }
 
@@ -39,7 +39,7 @@ variable "cf" {
     cache_behavior = {
       # Order matters
       api = {
-        path_pattern    = "/v1/color"
+        path_pattern    = "/v1/app"
         origin_id       = "alb"
         allowed_methods = "POST"
 
