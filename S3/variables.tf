@@ -14,6 +14,7 @@ variable "buckets" {
       enable_kms_encryption      = true
       enable_transfer_accelerate = true
       # access_log enable 할 때 대상 버킷 먼저 생성되어 있는 상태인지 확인
+      # 대상 버킷의 policy 덮어쓰니까 주의해야함
       enable_bucket_access_log = true
       dest_bucket_name         = "mytestbucket-20250207-2" # dest 버킷은 액세스 로깅 활성화 하면 안됨
       dest_object_prefix       = "s3-accesslog/"           # 끝에 / 붙여 줘야함
