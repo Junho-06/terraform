@@ -15,7 +15,7 @@ resource "aws_vpc" "vpc" {
 # public subnet
 # ========================================================
 resource "aws_subnet" "public_subnets" {
-  count = var.vpc.public.create_public_subnets == true ? length(var.vpc.public.public_subnet_azs) : 0
+  count = var.vpc.create_public_subnets == true ? length(var.vpc.public.public_subnet_azs) : 0
 
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = var.vpc.public.public_subnet_cidrs[var.vpc.public.public_subnet_azs[count.index]]
@@ -30,7 +30,7 @@ resource "aws_subnet" "public_subnets" {
 }
 
 resource "aws_internet_gateway" "igw" {
-  count = var.vpc.public.create_public_subnets == true ? 1 : 0
+  count = var.vpc.create_public_subnets == true ? 1 : 0
 
   vpc_id = aws_vpc.vpc.id
 
@@ -40,7 +40,7 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_route_table" "public-rt" {
-  count = var.vpc.public.create_public_subnets == true ? 1 : 0
+  count = var.vpc.create_public_subnets == true ? 1 : 0
 
   vpc_id = aws_vpc.vpc.id
 
@@ -59,7 +59,7 @@ resource "aws_route_table" "public-rt" {
 }
 
 resource "aws_route_table_association" "public-subnet-association" {
-  count = var.vpc.public.create_public_subnets == true ? length(var.vpc.public.public_subnet_azs) : 0
+  count = var.vpc.create_public_subnets == true ? length(var.vpc.public.public_subnet_azs) : 0
 
   subnet_id      = aws_subnet.public_subnets[count.index].id
   route_table_id = aws_route_table.public-rt[0].id
@@ -69,7 +69,7 @@ resource "aws_route_table_association" "public-subnet-association" {
 # private subnet
 # ========================================================
 resource "aws_subnet" "private_subnets" {
-  count = var.vpc.private.create_private_subnets == true ? length(var.vpc.private.private_subnet_azs) : 0
+  count = var.vpc.create_private_subnets == true ? length(var.vpc.private.private_subnet_azs) : 0
 
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = var.vpc.private.private_subnet_cidrs[var.vpc.private.private_subnet_azs[count.index]]
@@ -83,7 +83,7 @@ resource "aws_subnet" "private_subnets" {
 }
 
 resource "aws_eip" "ngw-eip" {
-  count = var.vpc.private.create_private_subnets == true ? length(var.vpc.private.private_subnet_azs) : 0
+  count = var.vpc.create_private_subnets == true ? length(var.vpc.private.private_subnet_azs) : 0
 
   tags = {
     Name = "${var.vpc.private.nat_gateway_names[var.vpc.private.private_subnet_azs[count.index]]}-eip"
@@ -91,7 +91,7 @@ resource "aws_eip" "ngw-eip" {
 }
 
 resource "aws_nat_gateway" "ngw" {
-  count = var.vpc.private.create_private_subnets == true ? length(var.vpc.private.private_subnet_azs) : 0
+  count = var.vpc.create_private_subnets == true ? length(var.vpc.private.private_subnet_azs) : 0
 
   allocation_id = aws_eip.ngw-eip[count.index].id
   subnet_id     = aws_subnet.public_subnets[count.index].id
@@ -102,7 +102,7 @@ resource "aws_nat_gateway" "ngw" {
 }
 
 resource "aws_route_table" "private-rt" {
-  count = var.vpc.private.create_private_subnets == true ? length(var.vpc.private.private_subnet_azs) : 0
+  count = var.vpc.create_private_subnets == true ? length(var.vpc.private.private_subnet_azs) : 0
 
   vpc_id = aws_vpc.vpc.id
 
@@ -121,7 +121,7 @@ resource "aws_route_table" "private-rt" {
 }
 
 resource "aws_route_table_association" "private-subnet-association" {
-  count = var.vpc.private.create_private_subnets == true ? length(var.vpc.private.private_subnet_azs) : 0
+  count = var.vpc.create_private_subnets == true ? length(var.vpc.private.private_subnet_azs) : 0
 
   subnet_id      = aws_subnet.private_subnets[count.index].id
   route_table_id = aws_route_table.private-rt[count.index].id
@@ -131,7 +131,7 @@ resource "aws_route_table_association" "private-subnet-association" {
 # database subnet
 # ========================================================
 resource "aws_subnet" "database_subnets" {
-  count = var.vpc.database.create_database_subnets == true ? length(var.vpc.database.database_subnet_azs) : 0
+  count = var.vpc.create_database_subnets == true ? length(var.vpc.database.database_subnet_azs) : 0
 
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = var.vpc.database.database_subnet_cidrs[var.vpc.database.database_subnet_azs[count.index]]
@@ -145,7 +145,7 @@ resource "aws_subnet" "database_subnets" {
 }
 
 resource "aws_route_table" "database-seperate-rt" {
-  count = var.vpc.database.create_database_subnets == true && var.vpc.database.database_route_table_seperate == true ? length(var.vpc.database.database_subnet_azs) : 0
+  count = var.vpc.create_database_subnets == true && var.vpc.database.database_route_table_seperate == true ? length(var.vpc.database.database_subnet_azs) : 0
 
   vpc_id = aws_vpc.vpc.id
 
@@ -160,14 +160,14 @@ resource "aws_route_table" "database-seperate-rt" {
 }
 
 resource "aws_route_table_association" "database-seperate-subnet-association" {
-  count = var.vpc.database.create_database_subnets == true && var.vpc.database.database_route_table_seperate == true ? length(var.vpc.database.database_subnet_azs) : 0
+  count = var.vpc.create_database_subnets == true && var.vpc.database.database_route_table_seperate == true ? length(var.vpc.database.database_subnet_azs) : 0
 
   subnet_id      = aws_subnet.database_subnets[count.index].id
   route_table_id = aws_route_table.database-seperate-rt[count.index].id
 }
 
 resource "aws_route_table" "database-rt" {
-  count = var.vpc.database.create_database_subnets == true && var.vpc.database.database_route_table_seperate == false ? 1 : 0
+  count = var.vpc.create_database_subnets == true && var.vpc.database.database_route_table_seperate == false ? 1 : 0
 
   vpc_id = aws_vpc.vpc.id
 
@@ -182,7 +182,7 @@ resource "aws_route_table" "database-rt" {
 }
 
 resource "aws_route_table_association" "database-subnet-association" {
-  count = var.vpc.database.create_database_subnets == true && var.vpc.database.database_route_table_seperate == false ? length(var.vpc.database.database_subnet_azs) : 0
+  count = var.vpc.create_database_subnets == true && var.vpc.database.database_route_table_seperate == false ? length(var.vpc.database.database_subnet_azs) : 0
 
   subnet_id      = aws_subnet.database_subnets[count.index].id
   route_table_id = aws_route_table.database-rt[0].id

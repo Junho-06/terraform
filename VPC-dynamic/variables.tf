@@ -8,8 +8,8 @@ variable "vpc" {
     vpc_name = "skills-vpc"
     vpc_cidr = "10.0.0.0/16"
 
+    create_public_subnets = true
     public = {
-      create_public_subnets = true
       # ["a", "c"] / ["a", "b", "c"] / ...
       # az 순서 상관 없는데 private subnet az랑 맞추는게 중요함 (NAT GW 위치 때문에)
       public_subnet_azs = ["a", "b"]
@@ -25,9 +25,9 @@ variable "vpc" {
       public_route_table_name = "skills-public-rt"
     }
 
+    create_private_subnets = true
     private = {
-      create_private_subnets = true
-      private_subnet_azs     = ["a", "b"]
+      private_subnet_azs = ["a", "b"]
       private_subnet_names = {
         "a" = "skills-private-a"
         "b" = "skills-private-b"
@@ -46,9 +46,9 @@ variable "vpc" {
       }
     }
 
+    create_database_subnets = true
     database = {
-      create_database_subnets = true
-      database_subnet_azs     = ["a", "b"]
+      database_subnet_azs = ["a", "b"]
       database_subnet_names = {
         "a" = "skills-database-a"
         "b" = "skills-database-b"
