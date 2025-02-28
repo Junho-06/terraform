@@ -65,46 +65,6 @@ resource "aws_s3_bucket_accelerate_configuration" "accelerate" {
 
   depends_on = [aws_s3_bucket.bucket]
 }
-resource "aws_s3_bucket_logging" "accesslog" {
-  for_each = {
-    for k, v in var.buckets : k => v
-    if v.enable_bucket_access_log == "true"
-  }
-
-  bucket        = aws_s3_bucket.bucket[each.key].id
-  target_bucket = aws_s3_bucket.bucket[values({ for k, v in var.buckets : k => k if v.name == each.value.dest_bucket_name })[0]].id
-  target_prefix = each.value.dest_object_prefix
-
-  depends_on = [aws_s3_bucket.bucket]
-}
-resource "aws_s3_bucket_policy" "access_log_policy" {
-  for_each = {
-    for k, v in var.buckets : k => v
-    if v.enable_bucket_access_log == "true"
-  }
-
-  bucket = aws_s3_bucket.bucket[values({ for k, v in var.buckets : k => k if v.name == each.value.dest_bucket_name })[0]].id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "logging.s3.amazonaws.com"
-        }
-        Action   = "s3:PutObject"
-        Resource = "arn:aws:s3:::${each.value.dest_bucket_name}/${each.value.dest_object_prefix}*"
-        Condition = {
-          StringEquals = {
-            "aws:SourceAccount" = "${data.aws_caller_identity.current.account_id}"
-          }
-        }
-      }
-    ]
-  })
-}
-
 resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
   for_each = var.buckets
 
@@ -142,7 +102,53 @@ resource "aws_s3_bucket_intelligent_tiering_configuration" "intelligent_tiering"
   depends_on = [aws_s3_bucket.bucket]
 }
 
+
+resource "aws_s3_bucket_logging" "accesslog" {
+  for_each = {
+    for k, v in var.buckets : k => v
+    if v.enable_bucket_access_log == true
+  }
+
+  bucket        = each.value.name
+  target_bucket = each.value.dest_bucket_name
+  target_prefix = each.value.dest_object_prefix
+
+  depends_on = [aws_s3_bucket_policy.access_log_policy]
+}
+resource "aws_s3_bucket_policy" "access_log_policy" {
+  for_each = {
+    for k, v in var.buckets : k => v
+    if v.enable_bucket_access_log == true
+  }
+
+  bucket = each.value.dest_bucket_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "logging.s3.amazonaws.com"
+        }
+        Action   = "s3:PutObject"
+        Resource = "arn:aws:s3:::${each.value.dest_bucket_name}/${each.value.dest_object_prefix}*"
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = "${data.aws_caller_identity.current.account_id}"
+          },
+          ArnLike = {
+            "aws:SourceArn" : "arn:aws:s3:::${each.value.name}"
+          }
+        }
+      }
+    ]
+  })
+  depends_on = [aws_s3_bucket.bucket]
+}
 data "aws_caller_identity" "current" {}
+
+
 resource "aws_kms_key" "s3-cmk" {
   description             = "S3 CMK"
   enable_key_rotation     = true
