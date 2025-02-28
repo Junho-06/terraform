@@ -6,7 +6,7 @@ variable "alb" {
     internal = false
 
     # internal = false 일 때는 public subnets
-    public_subnets = ["subnet-04c53e7785c1ad948", "subnet-0e5f935f93215339d"]
+    public_subnets = ["subnet-0839403815cefa4fd", "subnet-07d349fc271cf70ce"]
     # internal = true 일 때는 private subnets
     private_subnets = []
 
@@ -19,15 +19,17 @@ variable "alb" {
     # Accesslog는 bucket이 s3 관리형 키를 사용해서 암호화 해야함 (CMK는 안됨)
     accesslog = {
       enabled       = true
-      bucket_name   = "mytestbucket-20250207-2"
-      bucket_prefix = "alb-log" # 끝에 / 포함 하면 안됨
+      bucket_name   = "mytestbucket-20250207-2" # access log와 connection log는 같은 버킷 사용해야함
+      bucket_prefix = "accesslog"               # 끝에 / 포함 하면 안됨
     }
+
+    # !!! Bucket 정책 덮어 쓰기 주의 !!!
 
     # Connectionlog도 bucket이 s3 관리형 키를 사용해서 암호화 해야함 (CMK는 안됨)
     connectionlog = {
       enabled       = true
-      bucket_name   = "mytestbucket-20250207-2"
-      bucket_prefix = "alb-log" # 끝에 / 포함 하면 안됨
+      bucket_name   = "mytestbucket-20250207-2" # access log와 connection log는 같은 버킷 사용해야함
+      bucket_prefix = "connectionlog"           # 끝에 / 포함 하면 안됨
     }
 
     listener_protocol = "HTTP" # HTTPS
@@ -51,7 +53,7 @@ variable "tg" {
 
     deregistration_delay = 10
 
-    vpc_id = "vpc-01484ff90e8244010"
+    vpc_id = "vpc-0eee0002731cc0abf"
 
     health_check_protocol = "HTTP"
     health_check_port     = "8080"
