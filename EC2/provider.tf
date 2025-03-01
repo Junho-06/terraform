@@ -10,6 +10,7 @@ terraform {
 }
 
 provider "aws" {
+  region = var.ec2.region
   default_tags {
     tags = {
       "project" = "skills"

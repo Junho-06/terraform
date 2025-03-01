@@ -1,7 +1,7 @@
 variable "key" {
   type        = string
   description = "for bastion key pair"
-  default     = "skills" # 미리 key pair가 생성 되어있어야 하고, key pair name 입력
+  default     = "skills" # 미리 key pair가 생성 되어있는 상태에서, key pair name 입력
 }
 
 variable "ec2" {
@@ -11,6 +11,8 @@ variable "ec2" {
   type        = any
   description = "Variables for EC2"
   default = {
+    region = "ap-northeast-2"
+
     name = "skills-bastion"
 
     ec2_ami = "Amazon Linux 2023 AMI" # "Amazon Linux 2 AMI", "Ubuntu"
@@ -18,8 +20,8 @@ variable "ec2" {
 
     instance_type = "t3.micro"
 
-    vpc_id    = "vpc-01b2bcf6054b12580"
-    subnet_id = "subnet-080770279fd3b0f80" # Public Subnet ID to locate bastion instance
+    vpc_id    = ""
+    subnet_id = "" # Public Subnet ID to locate bastion instance
 
     sg-name = "bastion-sg"
 
