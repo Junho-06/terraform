@@ -24,9 +24,9 @@ variable "aurora-mysql" {
   description = "Value for Aurora MYSQL"
 
   default = {
-    cluster_name   = "skills-aurora-mysql-cluster"
-    instance1_name = "skills-aurora-mysql-cluster-instance-1"
-    instance2_name = "skills-aurora-mysql-cluster-instance-2"
+    cluster_name = "skills-aurora-mysql-cluster"
+    # Instance는 subnet 갯수만큼 생김
+    instance_name_prefix = "skills-aurora-mysql-cluster-instance"
 
     engine_version = "8.0"
 
@@ -53,9 +53,8 @@ variable "aurora-postgres" {
   description = "Value for Aurora Postgres"
 
   default = {
-    cluster_name   = "skills-aurora-postgres-cluster"
-    instance1_name = "skills-aurora-postgres-cluster-instance-1"
-    instance2_name = "skills-aurora-postgres-cluster-instance-2"
+    cluster_name         = "skills-aurora-postgres-cluster"
+    instance_name_prefix = "skills-aurora-postgres-cluster-instance"
 
     engine_version = "16"
 

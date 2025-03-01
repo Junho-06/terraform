@@ -34,27 +34,11 @@ resource "aws_rds_cluster" "aurora-mysql-cluster" {
   enabled_cloudwatch_logs_exports = var.aurora-mysql.enabled_logs_type
 }
 
-resource "aws_rds_cluster_instance" "aurora-mysql-instance-1" {
-  count      = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
+resource "aws_rds_cluster_instance" "aurora-mysql-instance" {
+  count      = var.db_engine.create_aurora_mysql_cluster == true ? length(var.network.database_subnet_ids) : 0
   depends_on = [aws_rds_cluster.aurora-mysql-cluster[0]]
 
-  identifier         = var.aurora-mysql.instance1_name
-  cluster_identifier = aws_rds_cluster.aurora-mysql-cluster[0].id
-
-  instance_class = var.aurora-mysql.instance_type
-  engine         = "aurora-mysql"
-  engine_version = var.aurora-mysql.engine_version
-
-  monitoring_interval          = 60
-  monitoring_role_arn          = aws_iam_role.monitoring_role.arn
-  performance_insights_enabled = !startswith(var.aurora-mysql.instance_type, "db.t")
-}
-
-resource "aws_rds_cluster_instance" "aurora-mysql-instance-2" {
-  count      = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
-  depends_on = [aws_rds_cluster.aurora-mysql-cluster[0]]
-
-  identifier         = var.aurora-mysql.instance2_name
+  identifier         = "${var.aurora-mysql.instance_name_prefix}-${count.index}"
   cluster_identifier = aws_rds_cluster.aurora-mysql-cluster[0].id
 
   instance_class = var.aurora-mysql.instance_type
@@ -90,11 +74,13 @@ resource "aws_security_group" "aurora-mysql-sg" {
 }
 
 data "aws_secretsmanager_secret" "mysql_secrets" {
-  arn = aws_rds_cluster.aurora-mysql-cluster[0].master_user_secret[0].secret_arn
+  count = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
+  arn   = aws_rds_cluster.aurora-mysql-cluster[0].master_user_secret[0].secret_arn
 }
 
 data "aws_secretsmanager_secret_version" "mysql_secrets_current" {
-  secret_id = data.aws_secretsmanager_secret.mysql_secrets.id
+  count     = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.mysql_secrets[0].id
 }
 
 
@@ -132,27 +118,11 @@ resource "aws_rds_cluster" "aurora-postgres-cluster" {
   enabled_cloudwatch_logs_exports = var.aurora-postgres.enabled_logs_type
 }
 
-resource "aws_rds_cluster_instance" "aurora-postgres-instance-1" {
-  count      = var.db_engine.create_aurora_postgres_cluster == true ? 1 : 0
+resource "aws_rds_cluster_instance" "aurora-postgres-instance" {
+  count      = var.db_engine.create_aurora_postgres_cluster == true ? length(var.network.database_subnet_ids) : 0
   depends_on = [aws_rds_cluster.aurora-postgres-cluster[0]]
 
-  identifier         = var.aurora-postgres.instance1_name
-  cluster_identifier = aws_rds_cluster.aurora-postgres-cluster[0].id
-
-  instance_class = var.aurora-postgres.instance_type
-  engine         = "aurora-postgresql"
-  engine_version = var.aurora-postgres.engine_version
-
-  monitoring_interval          = 60
-  monitoring_role_arn          = aws_iam_role.monitoring_role.arn
-  performance_insights_enabled = !startswith(var.aurora-postgres.instance_type, "db.t")
-}
-
-resource "aws_rds_cluster_instance" "aurora-postgres-instance-2" {
-  count      = var.db_engine.create_aurora_postgres_cluster == true ? 1 : 0
-  depends_on = [aws_rds_cluster.aurora-postgres-cluster[0]]
-
-  identifier         = var.aurora-postgres.instance2_name
+  identifier         = "${var.aurora-postgres.instance_name_prefix}-${count.index}"
   cluster_identifier = aws_rds_cluster.aurora-postgres-cluster[0].id
 
   instance_class = var.aurora-postgres.instance_type
@@ -188,11 +158,13 @@ resource "aws_security_group" "aurora-postgres-sg" {
 }
 
 data "aws_secretsmanager_secret" "postgres_secrets" {
-  arn = aws_rds_cluster.aurora-postgres-cluster[0].master_user_secret[0].secret_arn
+  count = var.db_engine.create_aurora_postgres_cluster == true ? 1 : 0
+  arn   = aws_rds_cluster.aurora-postgres-cluster[0].master_user_secret[0].secret_arn
 }
 
 data "aws_secretsmanager_secret_version" "postgres_secrets_current" {
-  secret_id = data.aws_secretsmanager_secret.postgres_secrets.id
+  count     = var.db_engine.create_aurora_postgres_cluster == true ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.postgres_secrets[0].id
 }
 
 
