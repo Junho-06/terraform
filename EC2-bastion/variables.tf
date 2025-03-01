@@ -21,8 +21,8 @@ variable "ec2" {
 
     instance_type = "t3.micro"
 
-    vpc_id    = "vpc-0ce7c3d5411266943"
-    subnet_id = "subnet-00b7ef7c8762babe6" # Public Subnet ID to locate bastion instance
+    vpc_id    = ""
+    subnet_id = "" # Public Subnet ID to locate bastion instance
 
     sg-name = "bastion-sg"
 
