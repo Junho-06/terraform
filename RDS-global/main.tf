@@ -44,27 +44,12 @@ resource "aws_rds_cluster" "primary-cluster" {
   apply_immediately = true
 }
 
-resource "aws_rds_cluster_instance" "primary-instance-1" {
+resource "aws_rds_cluster_instance" "primary-instance" {
   provider   = aws.primary
   depends_on = [aws_rds_cluster.primary-cluster]
+  count      = length(var.primary_network.database_subnet_ids)
 
-  identifier         = var.rds.primary-instance1_name
-  cluster_identifier = aws_rds_cluster.primary-cluster.id
-
-  instance_class = var.rds.instance_type
-  engine         = "aurora-mysql"
-  engine_version = var.rds.engine_version
-
-  monitoring_interval          = 60
-  monitoring_role_arn          = aws_iam_role.monitoring_role.arn
-  performance_insights_enabled = !startswith(var.rds.instance_type, "db.t")
-}
-
-resource "aws_rds_cluster_instance" "primary-instance-2" {
-  provider   = aws.primary
-  depends_on = [aws_rds_cluster.primary-cluster]
-
-  identifier         = var.rds.primary-instance2_name
+  identifier         = "${var.rds.primary-instance_name_prefix}-${count.index}"
   cluster_identifier = aws_rds_cluster.primary-cluster.id
 
   instance_class = var.rds.instance_type
@@ -115,32 +100,16 @@ resource "aws_rds_cluster" "secondary-cluster" {
 
   depends_on = [
     aws_rds_cluster.primary-cluster,
-    aws_rds_cluster_instance.primary-instance-1,
-    aws_rds_cluster_instance.primary-instance-2
+    aws_rds_cluster_instance.primary-instance
   ]
 }
 
-resource "aws_rds_cluster_instance" "secondary-instance-1" {
+resource "aws_rds_cluster_instance" "secondary-instance" {
   provider   = aws.secondary
   depends_on = [aws_rds_cluster.secondary-cluster]
+  count      = length(var.secondary_network.database_subnet_ids)
 
-  identifier         = var.rds.secondary-instance1_name
-  cluster_identifier = aws_rds_cluster.secondary-cluster.id
-
-  instance_class = var.rds.instance_type
-  engine         = "aurora-mysql"
-  engine_version = var.rds.engine_version
-
-  monitoring_interval          = 60
-  monitoring_role_arn          = aws_iam_role.monitoring_role.arn
-  performance_insights_enabled = !startswith(var.rds.instance_type, "db.t")
-}
-
-resource "aws_rds_cluster_instance" "secondary-instance-2" {
-  provider   = aws.secondary
-  depends_on = [aws_rds_cluster.secondary-cluster]
-
-  identifier         = var.rds.secondary-instance2_name
+  identifier         = "${var.rds.secondary-instance_name_prefix}-${count.index}"
   cluster_identifier = aws_rds_cluster.secondary-cluster.id
 
   instance_class = var.rds.instance_type
