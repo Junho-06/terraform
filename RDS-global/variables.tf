@@ -9,17 +9,18 @@ variable "region" {
 variable "primary_network" {
   type = any
   default = {
-    vpc_id              = "vpc-0ad2361ec8f22f77b"
+    vpc_id              = "vpc-0de80fd80a583c2e3"
     vpc_cidr            = "10.0.0.0/16"
-    database_subnet_ids = ["subnet-08c20dde784e83ca0", "subnet-0b015f8afc6edc03e"]
+    database_subnet_ids = ["subnet-08b9fc60c44fa16da", "subnet-0f5b45fbfd193ddfd"]
   }
 }
+
 variable "secondary_network" {
   type = any
   default = {
-    vpc_id              = "vpc-028cbd1bafba17ff5"
+    vpc_id              = "vpc-00841dbe8ffbe7eb2"
     vpc_cidr            = "172.16.0.0/16"
-    database_subnet_ids = ["subnet-09ce01eb53a8cf67b", "subnet-077dd92e1dd12a638"]
+    database_subnet_ids = ["subnet-0bd6db1d4b19941da", "subnet-08188071c791a876c"]
   }
 }
 
@@ -30,8 +31,9 @@ variable "rds" {
     primary_cluster_name   = "skills-rds-ap-cluster"
     secondary_cluster_name = "skills-rds-us-cluster"
 
-    primary-instance1_name   = "skills-rds-ap-instance1"
-    primary-instance2_name   = "skills-rds-ap-instance2"
+    primary-instance1_name = "skills-rds-ap-instance1"
+    primary-instance2_name = "skills-rds-ap-instance2"
+
     secondary-instance1_name = "skills-rds-us-instance1"
     secondary-instance2_name = "skills-rds-us-instance2"
 
