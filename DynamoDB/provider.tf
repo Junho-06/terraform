@@ -10,6 +10,7 @@ terraform {
 }
 
 provider "aws" {
+  region = var.dynamodb.region
   default_tags {
     tags = {
       "project" = "skills"

@@ -108,7 +108,7 @@ resource "aws_appautoscaling_policy" "dynamodb_table_write_policy" {
 resource "null_resource" "trigger_backup" {
   provisioner "local-exec" {
     command = <<EOT
-      aws dynamodb create-backup --table-name ${var.dynamodb.table_name} --backup-name ${var.dynamodb.table_name}
+      aws dynamodb create-backup --region ${var.dynamodb.region} --table-name ${var.dynamodb.table_name} --backup-name ${var.dynamodb.table_name}
     EOT
     when    = create
   }

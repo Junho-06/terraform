@@ -2,6 +2,8 @@ variable "dynamodb" {
   type        = any
   description = "DynamoDB Variables"
   default = {
+    region = "ap-northeast-2"
+
     table_name = "skills-dynamodb"
 
     table_class  = "STANDARD"        # STANDARD / STANDARD_INFREQUENT_ACCESS
