@@ -6,12 +6,16 @@ variable "db_engine" {
   }
 }
 
+variable "region" {
+  default = "ap-northeast-2"
+}
+
 variable "network" {
   type = any
   default = {
-    vpc_id              = "vpc-0ad2361ec8f22f77b"
-    vpc_cidr            = "10.0.0.0/16"
-    database_subnet_ids = ["subnet-08c20dde784e83ca0", "subnet-0b015f8afc6edc03e"]
+    vpc_id              = ""
+    vpc_cidr            = ""
+    database_subnet_ids = ["", ""]
   }
 }
 
