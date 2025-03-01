@@ -1,7 +1,8 @@
 variable "key" {
   type        = string
-  description = "for bastion key pair"
-  default     = "skills" # 미리 key pair가 생성 되어있는 상태에서, key pair name 입력
+  description = "bastion key pair name"
+  # key는 EC2 Module의 keypairs 안에 저장됨
+  default = "skills"
 }
 
 variable "ec2" {
@@ -20,15 +21,15 @@ variable "ec2" {
 
     instance_type = "t3.micro"
 
-    vpc_id    = ""
-    subnet_id = "" # Public Subnet ID to locate bastion instance
+    vpc_id    = "vpc-0ce7c3d5411266943"
+    subnet_id = "subnet-00b7ef7c8762babe6" # Public Subnet ID to locate bastion instance
 
     sg-name = "bastion-sg"
 
     ssh-port      = "22" # Best Practice is change this port
     ssh-cidr-myip = true # true = only allow my ip / false = allow 0.0.0.0/0
 
-    map_eip_to_bastion = true # eip associate to bastion
+    map_eip_to_bastion = false # eip associate to bastion
 
     bastion-iam-role-name = "bastion-role"
     attach-policy         = "Poweruser" # Poweruser / 둘 다 아닐 경우 attach X

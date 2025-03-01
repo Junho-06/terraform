@@ -4,7 +4,7 @@ resource "aws_instance" "bastion" {
   ami = data.external.ami_lookup.result["ami_id"]
 
   instance_type = var.ec2.instance_type
-  key_name      = data.aws_key_pair.key-pair.key_name
+  key_name      = aws_key_pair.keypair.key_name
 
   subnet_id              = var.ec2.subnet_id
   vpc_security_group_ids = [aws_security_group.bastion_security_group.id]
@@ -21,9 +21,20 @@ resource "aws_instance" "bastion" {
 
 # Key Pair
 # ========================================================
-data "aws_key_pair" "key-pair" {
-  key_name           = var.key
-  include_public_key = true
+resource "tls_private_key" "key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "keypair" {
+  key_name   = var.key
+  public_key = tls_private_key.key.public_key_openssh
+}
+
+resource "local_file" "local" {
+  filename        = "./keypairs/${var.key}.pem"
+  content         = tls_private_key.key.private_key_pem
+  file_permission = "0600"
 }
 
 
