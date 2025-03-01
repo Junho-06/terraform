@@ -1,5 +1,7 @@
 output "dynamodb" {
   value = {
+    Table_ARN = aws_dynamodb_table.dynamodb-table.arn
+
     Partition_Key = var.dynamodb.partition_key
     Sort_Key      = try(var.dynamodb.sort_key, null)
 

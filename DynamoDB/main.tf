@@ -119,9 +119,11 @@ resource "null_resource" "trigger_backup" {
 # CMK
 # ========================================================
 data "aws_caller_identity" "current" {}
+
 resource "aws_kms_key" "dynamodb-cmk" {
   description             = "DyanmoDB CMK"
   enable_key_rotation     = true
+  rotation_period_in_days = 90
   deletion_window_in_days = 7
   policy = jsonencode({
     Version = "2012-10-17"
@@ -139,6 +141,7 @@ resource "aws_kms_key" "dynamodb-cmk" {
     ]
   })
 }
+
 resource "aws_kms_alias" "dynamodb-cmk-alias" {
   name          = "alias/dynamodb-cmk"
   target_key_id = aws_kms_key.dynamodb-cmk.id
