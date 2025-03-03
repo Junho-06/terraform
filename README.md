@@ -33,6 +33,8 @@ terraform version
     terraform apply --auto-approve
     ```
 
-> ## ⚠️ **WARNING**  
-> You Should check your Region  
-> ( ex: aws configure, variables.tf file )
+
+
+> ## ${\textsf{\color{Red}🚧 Watch out 🚧}}$
+> **You Should check your Region**  
+> (ex: aws configure, variables.tf file)
