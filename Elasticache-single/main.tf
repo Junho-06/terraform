@@ -48,7 +48,7 @@ resource "aws_elasticache_replication_group" "elasticache" {
 }
 
 
-# Elasticache
+# Elasticache serverless
 # ========================================================
 resource "aws_elasticache_serverless_cache" "serverless_elasticache" {
   count = var.cache.serverless_enable == true ? 1 : 0
