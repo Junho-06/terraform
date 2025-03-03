@@ -36,5 +36,5 @@ terraform version
 
 
 > ## ${\textsf{\color{Red}🚧 Watch out 🚧}}$
-> **You Should check your Region**  
-> (ex: aws configure, variables.tf file)
+> **${\textsf{\color{White}You Should check your Region}}$**  
+> ${\textsf{\color{White}(ex: aws configure, variables.tf file)}}$
