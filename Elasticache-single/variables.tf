@@ -1,3 +1,8 @@
+variable "region" {
+  type    = any
+  default = "ap-northeast-2"
+}
+
 variable "network" {
   type = any
   default = {
@@ -5,11 +10,6 @@ variable "network" {
     vpc_cidr            = ""
     database_subnet_ids = ["", ""]
   }
-}
-
-variable "region" {
-  type    = any
-  default = "ap-northeast-2"
 }
 
 variable "cache" {
