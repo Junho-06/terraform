@@ -16,8 +16,8 @@ variable "ec2" {
 
     name = "skills-bastion"
 
-    ec2_ami = "Amazon Linux 2023 AMI" # "Amazon Linux 2 AMI", "Ubuntu"
-    arch    = "x86_64"                # arm64
+    ec2_ami = "Amazon Linux 2023 AMI" # "Amazon Linux 2023 AMI", "Amazon Linux 2 AMI", "Ubuntu"
+    arch    = "x86_64"                # x86_64 / arm64
 
     instance_type = "t3.micro"
 
@@ -32,6 +32,6 @@ variable "ec2" {
     map_eip_to_bastion = false # eip associate to bastion
 
     bastion-iam-role-name = "bastion-role"
-    attach-policy         = "Poweruser" # Poweruser / 둘 다 아닐 경우 attach X
+    attach-policy         = "Poweruser" # Admin / Poweruser / 둘 다 아닐 경우 attach X
   }
 }
