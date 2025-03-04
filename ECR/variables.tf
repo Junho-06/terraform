@@ -1,3 +1,7 @@
+variable "region" {
+  default = "ap-northeast-2"
+}
+
 variable "repositories_scan_enhanced" {
   type        = bool
   description = "ECR Repo Scan Enhanced Type"
@@ -9,11 +13,11 @@ variable "repositories" {
   description = "ECR repositories Map Variables"
 
   default = {
-    myapp = {
+    repo_name_here1 = {
       encrypted = true # BP
       immutable = true # BP
     }
-    test = {
+    repo_name_here2 = {
       encrypted = false
       immutable = false
     }

@@ -42,6 +42,7 @@ data "aws_caller_identity" "current" {}
 resource "aws_kms_key" "ecr-cmk" {
   description             = "ECR CMK"
   enable_key_rotation     = true
+  rotation_period_in_days = 90
   deletion_window_in_days = 7
   policy = jsonencode({
     Version = "2012-10-17"
