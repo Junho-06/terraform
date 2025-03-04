@@ -10,15 +10,15 @@ variable "network" {
   type = any
   default = {
     primary_network = {
-      vpc_id              = "vpc-04245950a6dfca923"
-      vpc_cidr            = "10.0.0.0/16"
-      database_subnet_ids = ["subnet-082c0aea2d34a5519", "subnet-0a1c11fea9ec9d630"]
+      vpc_id              = ""
+      vpc_cidr            = ""
+      database_subnet_ids = ["", ""]
     }
 
     secondary_network = {
-      vpc_id              = "vpc-0517de4833dc8200b"
-      vpc_cidr            = "172.16.0.0/16"
-      database_subnet_ids = ["subnet-0d3518b070edf46ea", "subnet-07a304e00618bef5c"]
+      vpc_id              = ""
+      vpc_cidr            = ""
+      database_subnet_ids = ["s", ""]
     }
   }
 }
