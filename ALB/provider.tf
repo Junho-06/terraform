@@ -10,6 +10,7 @@ terraform {
 }
 
 provider "aws" {
+  region = var.alb.region
   default_tags {
     tags = {
       "project" = "skills"

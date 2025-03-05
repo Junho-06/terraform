@@ -2,11 +2,13 @@ variable "alb" {
   type        = any
   description = "Value for ALB"
   default = {
+    region = "ap-northeast-2"
+
     name     = "skills-alb"
     internal = false
 
     # internal = false 일 때는 public subnets
-    public_subnets = ["subnet-0839403815cefa4fd", "subnet-07d349fc271cf70ce"]
+    public_subnets = ["", ""]
     # internal = true 일 때는 private subnets
     private_subnets = []
 
@@ -19,8 +21,8 @@ variable "alb" {
     # Accesslog는 bucket이 s3 관리형 키를 사용해서 암호화 해야함 (CMK는 안됨)
     accesslog = {
       enabled                = true
-      bucket_name            = "mytestbucket-20250207-2" # access log와 connection log는 같은 버킷 사용해야함
-      bucket_prefix          = "accesslog"               # 끝에 / 포함 하면 안됨
+      bucket_name            = ""          # access log와 connection log는 같은 버킷 사용해야함
+      bucket_prefix          = "accesslog" # 끝에 / 포함 하면 안됨
       dest_bucket_has_policy = true
     }
 
@@ -29,8 +31,8 @@ variable "alb" {
     # Connectionlog도 bucket이 s3 관리형 키를 사용해서 암호화 해야함 (CMK는 안됨)
     connectionlog = {
       enabled                = true
-      bucket_name            = "mytestbucket-20250207-2" # access log와 connection log는 같은 버킷 사용해야함
-      bucket_prefix          = "connectionlog"           # 끝에 / 포함 하면 안됨
+      bucket_name            = ""              # access log와 connection log는 같은 버킷 사용해야함
+      bucket_prefix          = "connectionlog" # 끝에 / 포함 하면 안됨
       dest_bucket_has_policy = true
     }
 
@@ -55,7 +57,7 @@ variable "tg" {
 
     deregistration_delay = 10
 
-    vpc_id = "vpc-0eee0002731cc0abf"
+    vpc_id = ""
 
     health_check_protocol = "HTTP"
     health_check_port     = "8080"
