@@ -3,6 +3,8 @@ variable "buckets" {
   description = "Map for S3 buckets"
 
   default = {
+    region = "ap-northeast-2"
+
     bucket1 = {
       name                = "mytestbucket-20250207-1"
       object_lock_enabled = false
