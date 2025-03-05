@@ -1,11 +1,16 @@
 # Global Cluster
 # ========================================================
 resource "aws_rds_global_cluster" "rds_global_cluster" {
-  provider                  = aws.primary
+  provider = aws.primary
+
   global_cluster_identifier = var.rds.global_cluster_name
-  engine                    = "aurora-mysql"
-  database_name             = try(var.rds.initial_database_name, null)
-  storage_encrypted         = true
+
+  engine         = var.rds.engine
+  engine_version = var.rds.engine == "aurora-postgresql" ? var.rds.engine_version : var.rds.engine == "aurora-mysql" ? var.rds.engine_version == "8.0" ? "8.0.mysql_aurora.3.08.1" : var.rds.engine_version == "5.7" ? "5.7.mysql_aurora.2.11.5" : null : null
+
+  database_name = try(var.rds.initial_database_name, null)
+
+  storage_encrypted = true
 }
 
 
@@ -18,14 +23,23 @@ resource "aws_rds_cluster" "primary-cluster" {
   engine_mode    = "provisioned"
   engine_version = aws_rds_global_cluster.rds_global_cluster.engine_version
 
+  dynamic "serverlessv2_scaling_configuration" {
+    for_each = var.rds.engine_mode == "serverless" ? [1] : []
+
+    content {
+      min_capacity             = var.rds.serverless.min_capacity
+      max_capacity             = var.rds.serverless.max_capacity
+      seconds_until_auto_pause = var.rds.serverless.seconds_until_auto_pause
+    }
+  }
+
+
   cluster_identifier        = var.rds.primary_cluster_name
   global_cluster_identifier = aws_rds_global_cluster.rds_global_cluster.id
 
   master_username                     = var.rds.username
   master_password                     = var.rds.password
   iam_database_authentication_enabled = true
-
-  database_name = try(var.rds.initial_database_name, null)
 
   db_subnet_group_name   = aws_db_subnet_group.primary_rds_subnet_group.name
   vpc_security_group_ids = [aws_security_group.primary-rds-sg.id]
@@ -34,12 +48,14 @@ resource "aws_rds_cluster" "primary-cluster" {
   storage_encrypted = true
   kms_key_id        = aws_kms_key.primary-rds-cmk.arn
 
-  backup_retention_period         = var.rds.backup_retention_period
-  skip_final_snapshot             = var.rds.skip_final_snapshot
-  copy_tags_to_snapshot           = var.rds.copy_tags_to_snapshot
+  backup_retention_period = var.rds.backup_retention_period
+  skip_final_snapshot     = var.rds.skip_final_snapshot
+  copy_tags_to_snapshot   = var.rds.copy_tags_to_snapshot
+
   monitoring_interval             = 60
   monitoring_role_arn             = aws_iam_role.monitoring_role.arn
-  enabled_cloudwatch_logs_exports = var.rds.enabled_logs_type
+  performance_insights_enabled    = !startswith(var.rds.provisioned.instance_type, "db.t")
+  enabled_cloudwatch_logs_exports = var.rds.engine == "aurora-mysql" ? var.rds.enabled_mysql_logs_type : var.rds.engine == "aurora-postgresql" ? var.rds.enabled_postgres_logs_type : null
 
   apply_immediately = true
 }
@@ -52,13 +68,13 @@ resource "aws_rds_cluster_instance" "primary-instance" {
   identifier         = "${var.rds.primary-instance_name_prefix}-${count.index}"
   cluster_identifier = aws_rds_cluster.primary-cluster.id
 
-  instance_class = var.rds.instance_type
-  engine         = "aurora-mysql"
-  engine_version = var.rds.engine_version
+  instance_class = var.rds.engine_mode == "provisioned" ? var.rds.provisioned.instance_type : var.rds.engine_mode == "serverless" ? "db.serverless" : null
+  engine         = aws_rds_global_cluster.rds_global_cluster.engine
+  engine_version = aws_rds_global_cluster.rds_global_cluster.engine_version
 
   monitoring_interval          = 60
   monitoring_role_arn          = aws_iam_role.monitoring_role.arn
-  performance_insights_enabled = !startswith(var.rds.instance_type, "db.t")
+  performance_insights_enabled = !startswith(var.rds.provisioned.instance_type, "db.t")
 }
 
 
@@ -70,6 +86,16 @@ resource "aws_rds_cluster" "secondary-cluster" {
   engine         = aws_rds_global_cluster.rds_global_cluster.engine
   engine_mode    = "provisioned"
   engine_version = aws_rds_global_cluster.rds_global_cluster.engine_version
+
+  dynamic "serverlessv2_scaling_configuration" {
+    for_each = var.rds.engine_mode == "serverless" ? [1] : []
+
+    content {
+      min_capacity             = var.rds.serverless.min_capacity
+      max_capacity             = var.rds.serverless.max_capacity
+      seconds_until_auto_pause = var.rds.serverless.seconds_until_auto_pause
+    }
+  }
 
   cluster_identifier        = var.rds.secondary_cluster_name
   global_cluster_identifier = aws_rds_global_cluster.rds_global_cluster.id
@@ -83,12 +109,14 @@ resource "aws_rds_cluster" "secondary-cluster" {
   storage_encrypted = true
   kms_key_id        = aws_kms_key.secondary-rds-cmk.arn
 
-  backup_retention_period         = var.rds.backup_retention_period
-  skip_final_snapshot             = var.rds.skip_final_snapshot
-  copy_tags_to_snapshot           = var.rds.copy_tags_to_snapshot
+  backup_retention_period = var.rds.backup_retention_period
+  skip_final_snapshot     = var.rds.skip_final_snapshot
+  copy_tags_to_snapshot   = var.rds.copy_tags_to_snapshot
+
   monitoring_interval             = 60
   monitoring_role_arn             = aws_iam_role.monitoring_role.arn
-  enabled_cloudwatch_logs_exports = var.rds.enabled_logs_type
+  performance_insights_enabled    = !startswith(var.rds.provisioned.instance_type, "db.t")
+  enabled_cloudwatch_logs_exports = var.rds.engine == "aurora-mysql" ? var.rds.enabled_mysql_logs_type : var.rds.engine == "aurora-postgresql" ? var.rds.enabled_postgres_logs_type : null
 
   apply_immediately = true
 
@@ -112,13 +140,13 @@ resource "aws_rds_cluster_instance" "secondary-instance" {
   identifier         = "${var.rds.secondary-instance_name_prefix}-${count.index}"
   cluster_identifier = aws_rds_cluster.secondary-cluster.id
 
-  instance_class = var.rds.instance_type
-  engine         = "aurora-mysql"
-  engine_version = var.rds.engine_version
+  instance_class = var.rds.engine_mode == "provisioned" ? var.rds.provisioned.instance_type : var.rds.engine_mode == "serverless" ? "db.serverless" : null
+  engine         = aws_rds_global_cluster.rds_global_cluster.engine
+  engine_version = aws_rds_global_cluster.rds_global_cluster.engine_version
 
   monitoring_interval          = 60
   monitoring_role_arn          = aws_iam_role.monitoring_role.arn
-  performance_insights_enabled = !startswith(var.rds.instance_type, "db.t")
+  performance_insights_enabled = !startswith(var.rds.provisioned.instance_type, "db.t")
 }
 
 
