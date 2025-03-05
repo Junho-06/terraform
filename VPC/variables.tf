@@ -69,7 +69,7 @@ variable "vpc" {
 
     flowlog = {
       vpc_flowlog_to_cloudwatch_enable = true
-      flowlog_traffic_type             = "ALL" # "ACCEPT", "REJECT"
+      flowlog_traffic_type             = "ALL" # "ALL", "ACCEPT", "REJECT"
       flowlog_log_group_name           = "skills-vpc-flowlog-log-group"
       flowlog_max_aggregation_interval = 60 # 60s or 600s
       flowlog_log_group_retention_days = 90
