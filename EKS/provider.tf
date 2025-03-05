@@ -10,6 +10,7 @@ terraform {
 }
 
 provider "aws" {
+  region = var.cluster.region
   default_tags {
     tags = {
       "project" = "skills"

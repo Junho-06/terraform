@@ -3,15 +3,17 @@ variable "cluster" {
   description = "Map for EKS cluster"
 
   default = {
+    region = "ap-northeast-2"
+
     name    = "skills-cluster"
     version = "1.31"
 
-    authentication_mode                        = "API_AND_CONFIG_MAP" # CONFIG_MAP, API
+    authentication_mode                        = "API_AND_CONFIG_MAP" # CONFIG_MAP, API, API_AND_CONFIG_MAP
     grant_root_user_cluster_access_permissions = true
 
-    vpc_id             = "vpc-01484ff90e8244010"
-    vpc_cidr           = "10.0.0.0/16"
-    cluster_subnet_ids = ["subnet-01814993f62ce6909", "subnet-04a41e13e7d44752f"]
+    vpc_id             = ""
+    vpc_cidr           = ""
+    private_subnet_ids = ["", ""]
 
     cluster_endpoint_private_access      = true # 2개 다 true로 설정시 private and public
     cluster_endpoint_public_access       = false
@@ -19,8 +21,10 @@ variable "cluster" {
 
     enable_secrets_encryption = true
 
+    # "audit", "api", "authenticator", "scheduler", "controllerManager"
     enabled_log_types = ["audit", "api", "authenticator", "scheduler", "controllerManager"]
 
+    # addon 생성 3분 후에 timeout 되고 addon 설치만 된 상태로 남게됨
     addon = {
       1 = "coredns",
       2 = "kube-proxy",
@@ -32,9 +36,10 @@ variable "cluster" {
 
     node_group = {
       node_group_1 = {
-        node_group_name         = "skills-worker-ng"
-        worker_ec2_name         = "skills-worker-node"
-        imds_v2_mode            = "required" # optional
+        node_group_name = "skills-worker-ng"
+        worker_ec2_name = "skills-worker-node"
+
+        imds_v2_mode            = "required" # required, optional
         imds_v2_token_hop_limit = 2
 
         min_size     = 2
@@ -57,6 +62,24 @@ variable "cluster" {
             #value  = "addon"
           }
         ]
+      }
+    }
+
+    create_fargate_profile = false
+    fargate_profile = {
+      name = "skills-fargate"
+
+      namespaces = ["test", "custom", "no-label"]
+
+      labels_per_namespace = {
+
+        "test" = {
+          "env" = "test"
+        }
+
+        "custom" = {
+          "env" = "custom"
+        }
       }
     }
   }

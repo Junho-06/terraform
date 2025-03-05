@@ -1,3 +1,5 @@
+# EKS Cluster
+# ========================================================
 resource "aws_eks_cluster" "eks-cluster" {
   name    = var.cluster.name
   version = var.cluster.version
@@ -14,7 +16,7 @@ resource "aws_eks_cluster" "eks-cluster" {
     endpoint_public_access  = var.cluster.cluster_endpoint_public_access
     public_access_cidrs     = var.cluster.cluster_endpoint_public_access ? var.cluster.cluster_endpoint_public_access_cidrs : null
     security_group_ids      = [aws_security_group.cluster_additional_security_group.id]
-    subnet_ids              = var.cluster.cluster_subnet_ids
+    subnet_ids              = var.cluster.private_subnet_ids
   }
 
   enabled_cluster_log_types = var.cluster.enabled_log_types
@@ -36,13 +38,16 @@ resource "aws_eks_cluster" "eks-cluster" {
   ]
 }
 
+
+# EKS Nodegroup
+# ========================================================
 resource "aws_eks_node_group" "eks-node-group" {
   for_each = var.cluster.node_group
 
   cluster_name    = var.cluster.name
   node_group_name = each.value.node_group_name
   node_role_arn   = aws_iam_role.node-group-role.arn
-  subnet_ids      = var.cluster.cluster_subnet_ids
+  subnet_ids      = var.cluster.private_subnet_ids
 
   ami_type       = each.value.ami_type
   instance_types = each.value.instance_types
@@ -65,11 +70,11 @@ resource "aws_eks_node_group" "eks-node-group" {
   labels = try(each.value.labels, {})
 
   dynamic "taint" {
-    for_each = [for t in try(each.value.taints, []) : t if can(t.key) && can(t.effect)]
+    for_each = [for t in try(each.value.taints, []) : t if can(t.key) && can(t.effect) && can(t.value)]
 
     content {
       key    = taint.value.key
-      value  = try(taint.value.value, null)
+      value  = taint.value.value
       effect = taint.value.effect
     }
   }
@@ -80,15 +85,6 @@ resource "aws_eks_node_group" "eks-node-group" {
     aws_iam_role_policy_attachment.node-group-AmazonEKSWorkerNodePolicy,
     aws_eks_cluster.eks-cluster
   ]
-}
-
-resource "aws_eks_addon" "eks-addon" {
-  for_each = var.cluster.addon
-
-  cluster_name = aws_eks_cluster.eks-cluster.name
-  addon_name   = each.value
-
-  depends_on = [aws_eks_node_group.eks-node-group]
 }
 
 resource "aws_launch_template" "eks-worker-node-lt" {
@@ -103,7 +99,7 @@ resource "aws_launch_template" "eks-worker-node-lt" {
     instance_metadata_tags      = "enabled"
   }
 
-  vpc_security_group_ids = [aws_security_group.workder_node_security_group.id]
+  vpc_security_group_ids = [aws_security_group.worker_node_security_group.id]
 
   tag_specifications {
     resource_type = "instance"
@@ -125,6 +121,49 @@ resource "aws_launch_template" "eks-worker-node-lt" {
   ]
 }
 
+
+# EKS Addon
+# ========================================================
+resource "aws_eks_fargate_profile" "eks-fargate-profile" {
+  count = var.cluster.create_fargate_profile == true ? 1 : 0
+
+  cluster_name = aws_eks_cluster.eks-cluster.name
+
+  fargate_profile_name   = var.cluster.fargate_profile.name
+  pod_execution_role_arn = aws_iam_role.fargate-role[0].arn
+  subnet_ids             = var.cluster.private_subnet_ids
+
+  dynamic "selector" {
+    for_each = var.cluster.fargate_profile.namespaces
+
+    content {
+      namespace = selector.value
+      labels    = try(var.cluster.fargate_profile.labels_per_namespace[selector.value], null)
+    }
+  }
+
+  depends_on = [aws_ec2_tag.add_subnet_tags]
+}
+
+
+# EKS Addon
+# ========================================================
+resource "aws_eks_addon" "eks-addon" {
+  for_each = var.cluster.addon
+
+  cluster_name = aws_eks_cluster.eks-cluster.name
+  addon_name   = each.value
+
+  depends_on = [aws_eks_node_group.eks-node-group]
+
+  timeouts {
+    create = "3m"
+  }
+}
+
+
+# Cluster IAM Role
+# ========================================================
 resource "aws_iam_role" "eks-cluster-role" {
   name = "EKSClusterRole"
   assume_role_policy = jsonencode({
@@ -143,6 +182,7 @@ resource "aws_iam_role" "eks-cluster-role" {
     ]
   })
 }
+
 resource "aws_iam_policy" "cluster-cmk-use" {
   name        = "${var.cluster.name}-cmk-policy"
   description = "${var.cluster.name} cmk use policy"
@@ -165,18 +205,22 @@ resource "aws_iam_policy" "cluster-cmk-use" {
     ]
   })
 }
+
 resource "aws_iam_role_policy_attachment" "cluster_CMKPolicy" {
   role       = aws_iam_role.eks-cluster-role.name
   policy_arn = aws_iam_policy.cluster-cmk-use.arn
 }
+
 resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSClusterPolicy" {
   role       = aws_iam_role.eks-cluster-role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
+
 resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSVPCResourceController" {
   role       = aws_iam_role.eks-cluster-role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
 }
+
 resource "aws_iam_role_policy_attachments_exclusive" "cluster_policy_delete" {
   role_name = aws_iam_role.eks-cluster-role.name
   policy_arns = [
@@ -185,145 +229,10 @@ resource "aws_iam_role_policy_attachments_exclusive" "cluster_policy_delete" {
     aws_iam_policy.cluster-cmk-use.arn
   ]
 }
-data "aws_caller_identity" "current" {}
-resource "aws_kms_key" "eks-cmk" {
-  description             = "EKS CMK"
-  enable_key_rotation     = true
-  deletion_window_in_days = 7
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Id      = "eks-key"
-    Statement = [
-      {
-        Sid    = "Enable IAM User Permissions"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-        },
-        Action   = "kms:*"
-        Resource = "*"
-      },
-      {
-        Sid    = "Allow use of the key",
-        Effect = "Allow",
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${aws_iam_role.eks-cluster-role.name}"
-        },
-        Action = [
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*",
-          "kms:DescribeKey",
-          "kms:ListGrants",
-          "kms:GetPublicKey"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
-}
-resource "aws_kms_alias" "eks-cmk-alias" {
-  name          = "alias/eks-cmk"
-  target_key_id = aws_kms_key.eks-cmk.id
-}
-resource "aws_security_group" "cluster_additional_security_group" {
-  name        = "${var.cluster.name}-additional-sg"
-  description = "${var.cluster.name} addtional security group"
-  vpc_id      = var.cluster.vpc_id
-  tags = {
-    Name                                        = "${var.cluster.name}-additional-sg"
-    "kubernetes.io/cluster/${var.cluster.name}" = "owned"
-  }
-  ingress {
-    from_port       = "443"
-    to_port         = "443"
-    protocol        = "tcp"
-    security_groups = [aws_security_group.workder_node_security_group.id]
-  }
-  egress {
-    from_port   = "0"
-    to_port     = "0"
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  depends_on = [aws_security_group.workder_node_security_group]
-}
-resource "aws_security_group" "workder_node_security_group" {
-  name        = "${var.cluster.name}-worker-node-sg"
-  description = "${var.cluster.name} worker node security group"
-  vpc_id      = var.cluster.vpc_id
-  tags = {
-    Name = "${var.cluster.name}-worker-node-sg"
-  }
-}
-resource "aws_security_group_rule" "worker_node_ingress_from_cluster" {
-  type                     = "ingress"
-  from_port                = 443
-  to_port                  = 443
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.workder_node_security_group.id
-  source_security_group_id = aws_security_group.cluster_additional_security_group.id
-  depends_on               = [aws_security_group.cluster_additional_security_group]
-}
-resource "aws_security_group_rule" "worker_node_ingress_kubelet_from_cluster" {
-  type                     = "ingress"
-  from_port                = 10250
-  to_port                  = 10250
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.workder_node_security_group.id
-  source_security_group_id = aws_security_group.cluster_additional_security_group.id
-  depends_on               = [aws_security_group.cluster_additional_security_group]
-}
-resource "aws_security_group_rule" "worker_node_ingress_cluster_high_ports" {
-  type                     = "ingress"
-  from_port                = 1024
-  to_port                  = 65535
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.workder_node_security_group.id
-  source_security_group_id = aws_security_group.cluster_additional_security_group.id
-  depends_on               = [aws_security_group.cluster_additional_security_group]
-}
-resource "aws_security_group_rule" "worker_node_ingress_dns_tcp_self" {
-  type              = "ingress"
-  from_port         = 53
-  to_port           = 53
-  protocol          = "tcp"
-  security_group_id = aws_security_group.workder_node_security_group.id
-  self              = true
-}
-resource "aws_security_group_rule" "worker_node_ingress_dns_udp_self" {
-  type              = "ingress"
-  from_port         = 53
-  to_port           = 53
-  protocol          = "udp"
-  security_group_id = aws_security_group.workder_node_security_group.id
-  self              = true
-}
-resource "aws_security_group_rule" "worker_node_ingress_self" {
-  type              = "ingress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  security_group_id = aws_security_group.workder_node_security_group.id
-  self              = true
-}
-resource "aws_security_group_rule" "worker_node_egress_self" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  security_group_id = aws_security_group.workder_node_security_group.id
-  self              = true
-}
-resource "aws_security_group_rule" "worker_node_egress_to_all" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  security_group_id = aws_security_group.workder_node_security_group.id
-  cidr_blocks       = ["0.0.0.0/0"]
-}
+
+
+# Nodegroup IAM Role
+# ========================================================
 resource "aws_iam_role" "node-group-role" {
   name = "EKSNodegroupRole"
 
@@ -368,8 +277,222 @@ resource "aws_iam_role_policy_attachments_exclusive" "node-group-policy-delete" 
   ]
   role_name = aws_iam_role.node-group-role.name
 }
+
+
+# Fargate profile IAM Role
+# ========================================================
+resource "aws_iam_role" "fargate-role" {
+  count = var.cluster.create_fargate_profile == true ? 1 : 0
+
+  name = "eks-fargate-profile-role"
+
+  assume_role_policy = jsonencode({
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "eks-fargate-pods.amazonaws.com"
+      }
+    }]
+    Version = "2012-10-17"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "fargate-AmazonEKSFargatePodExecutionRolePolicy" {
+  count = var.cluster.create_fargate_profile == true ? 1 : 0
+
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
+  role       = aws_iam_role.fargate-role[0].name
+}
+
+
+# CMK
+# ========================================================
+data "aws_caller_identity" "current" {}
+
+resource "aws_kms_key" "eks-cmk" {
+  description             = "EKS CMK"
+  enable_key_rotation     = true
+  rotation_period_in_days = 90
+  deletion_window_in_days = 7
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Id      = "eks-key"
+    Statement = [
+      {
+        Sid    = "Enable IAM User Permissions"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        },
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "Allow use of the key",
+        Effect = "Allow",
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${aws_iam_role.eks-cluster-role.name}"
+        },
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey",
+          "kms:ListGrants",
+          "kms:GetPublicKey"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_kms_alias" "eks-cmk-alias" {
+  name          = "alias/eks-cmk"
+  target_key_id = aws_kms_key.eks-cmk.id
+}
+
+
+# Cluster Additional Security Group
+# ========================================================
+resource "aws_security_group" "cluster_additional_security_group" {
+  name        = "${var.cluster.name}-additional-sg"
+  description = "${var.cluster.name} addtional security group"
+
+  vpc_id = var.cluster.vpc_id
+
+  tags = {
+    Name                                        = "${var.cluster.name}-additional-sg"
+    "kubernetes.io/cluster/${var.cluster.name}" = "owned"
+  }
+
+  ingress {
+    from_port       = "443"
+    to_port         = "443"
+    protocol        = "tcp"
+    security_groups = [aws_security_group.worker_node_security_group.id]
+  }
+
+  egress {
+    from_port   = "0"
+    to_port     = "0"
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  depends_on = [aws_security_group.worker_node_security_group]
+}
+
+
+# Worker node Security Group
+# ========================================================
+resource "aws_security_group" "worker_node_security_group" {
+  name        = "${var.cluster.name}-worker-node-sg"
+  description = "${var.cluster.name} worker node security group"
+
+  vpc_id = var.cluster.vpc_id
+
+  tags = {
+    Name = "${var.cluster.name}-worker-node-sg"
+  }
+}
+
+resource "aws_security_group_rule" "worker_node_ingress_from_cluster" {
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.worker_node_security_group.id
+  source_security_group_id = aws_security_group.cluster_additional_security_group.id
+
+  depends_on = [aws_security_group.cluster_additional_security_group]
+}
+
+resource "aws_security_group_rule" "worker_node_ingress_kubelet_from_cluster" {
+  type                     = "ingress"
+  from_port                = 10250
+  to_port                  = 10250
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.worker_node_security_group.id
+  source_security_group_id = aws_security_group.cluster_additional_security_group.id
+
+  depends_on = [aws_security_group.cluster_additional_security_group]
+}
+
+resource "aws_security_group_rule" "worker_node_ingress_cluster_high_ports" {
+  type                     = "ingress"
+  from_port                = 1024
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.worker_node_security_group.id
+  source_security_group_id = aws_security_group.cluster_additional_security_group.id
+
+  depends_on = [aws_security_group.cluster_additional_security_group]
+}
+
+resource "aws_security_group_rule" "worker_node_ingress_dns_tcp_self" {
+  type              = "ingress"
+  from_port         = 53
+  to_port           = 53
+  protocol          = "tcp"
+  security_group_id = aws_security_group.worker_node_security_group.id
+  self              = true
+}
+
+resource "aws_security_group_rule" "worker_node_ingress_dns_udp_self" {
+  type              = "ingress"
+  from_port         = 53
+  to_port           = 53
+  protocol          = "udp"
+  security_group_id = aws_security_group.worker_node_security_group.id
+  self              = true
+}
+
+resource "aws_security_group_rule" "worker_node_ingress_self" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  security_group_id = aws_security_group.worker_node_security_group.id
+  self              = true
+}
+
+resource "aws_security_group_rule" "worker_node_egress_self" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  security_group_id = aws_security_group.worker_node_security_group.id
+  self              = true
+}
+
+resource "aws_security_group_rule" "worker_node_egress_to_all" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  security_group_id = aws_security_group.worker_node_security_group.id
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+
+# Attach Tag to VPC
+# ========================================================
 resource "aws_ec2_tag" "add_vpc_tags" {
   resource_id = var.cluster.vpc_id
+  key         = "kubernetes.io/cluster/${var.cluster.name}"
+  value       = "owned"
+}
+
+
+# Attach Tag to Subnet
+# ========================================================
+resource "aws_ec2_tag" "add_subnet_tags" {
+  for_each = toset(var.cluster.private_subnet_ids)
+
+  resource_id = each.value
   key         = "kubernetes.io/cluster/${var.cluster.name}"
   value       = "owned"
 }
