@@ -194,6 +194,10 @@ resource "aws_security_group" "primary-rds-sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name = "primary-rds-sg"
+  }
 }
 
 resource "aws_security_group" "secondary-rds-sg" {
@@ -216,6 +220,10 @@ resource "aws_security_group" "secondary-rds-sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "secondary-rds-sg"
   }
 }
 

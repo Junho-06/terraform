@@ -122,7 +122,7 @@ resource "aws_launch_template" "eks-worker-node-lt" {
 }
 
 
-# EKS Addon
+# Fargate Profile
 # ========================================================
 resource "aws_eks_fargate_profile" "eks-fargate-profile" {
   count = var.cluster.create_fargate_profile == true ? 1 : 0

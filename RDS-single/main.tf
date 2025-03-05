@@ -84,6 +84,10 @@ resource "aws_security_group" "aurora-mysql-sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name = "aurora-mysql-sg"
+  }
 }
 
 data "aws_secretsmanager_secret" "mysql_secrets" {
@@ -180,6 +184,10 @@ resource "aws_security_group" "aurora-postgres-sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "aurora-postgres-sg"
   }
 }
 
