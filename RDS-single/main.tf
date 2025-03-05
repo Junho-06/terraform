@@ -7,7 +7,17 @@ resource "aws_rds_cluster" "aurora-mysql-cluster" {
 
   engine         = "aurora-mysql"
   engine_mode    = "provisioned"
-  engine_version = var.aurora-mysql.engine_version
+  engine_version = var.aurora-mysql.engine_mode == "provisioned" ? var.aurora-mysql.engine_version : "8.0.mysql_aurora.3.08.1"
+
+  dynamic "serverlessv2_scaling_configuration" {
+    for_each = var.aurora-mysql.engine_mode == "serverless" ? [1] : []
+
+    content {
+      min_capacity             = var.aurora-postgres.serverless.min_capacity
+      max_capacity             = var.aurora-postgres.serverless.max_capacity
+      seconds_until_auto_pause = var.aurora-postgres.serverless.seconds_until_auto_pause
+    }
+  }
 
   db_subnet_group_name   = aws_db_subnet_group.rds_subnet_group.name
   vpc_security_group_ids = [aws_security_group.aurora-mysql-sg[0].id]
@@ -21,8 +31,9 @@ resource "aws_rds_cluster" "aurora-mysql-cluster" {
   master_user_secret_kms_key_id       = aws_kms_key.rds-cmk.id
   iam_database_authentication_enabled = true
 
-  storage_encrypted       = true
-  kms_key_id              = aws_kms_key.rds-cmk.arn
+  storage_encrypted = true
+  kms_key_id        = aws_kms_key.rds-cmk.arn
+
   backup_retention_period = var.aurora-mysql.backup_retention_period
   skip_final_snapshot     = var.aurora-mysql.skip_final_snapshot
   copy_tags_to_snapshot   = var.aurora-mysql.copy_tags_to_snapshot
@@ -31,6 +42,7 @@ resource "aws_rds_cluster" "aurora-mysql-cluster" {
 
   monitoring_interval             = 60
   monitoring_role_arn             = aws_iam_role.monitoring_role.arn
+  performance_insights_enabled    = var.aurora-mysql.engine_mode == "provisioned" ? !startswith(var.aurora-mysql.provisioned.instance_type, "db.t") : true
   enabled_cloudwatch_logs_exports = var.aurora-mysql.enabled_logs_type
 }
 
@@ -41,13 +53,14 @@ resource "aws_rds_cluster_instance" "aurora-mysql-instance" {
   identifier         = "${var.aurora-mysql.instance_name_prefix}-${count.index}"
   cluster_identifier = aws_rds_cluster.aurora-mysql-cluster[0].id
 
-  instance_class = var.aurora-mysql.instance_type
+  instance_class = var.aurora-mysql.engine_mode == "provisioned" ? var.aurora-mysql.provisioned.instance_type : "db.serverless"
+
   engine         = "aurora-mysql"
   engine_version = var.aurora-mysql.engine_version
 
   monitoring_interval          = 60
   monitoring_role_arn          = aws_iam_role.monitoring_role.arn
-  performance_insights_enabled = !startswith(var.aurora-mysql.instance_type, "db.t")
+  performance_insights_enabled = var.aurora-mysql.engine_mode == "provisioned" ? !startswith(var.aurora-mysql.provisioned.instance_type, "db.t") : true
 }
 
 resource "aws_security_group" "aurora-mysql-sg" {
@@ -95,6 +108,16 @@ resource "aws_rds_cluster" "aurora-postgres-cluster" {
   engine_mode    = "provisioned"
   engine_version = var.aurora-postgres.engine_version
 
+  dynamic "serverlessv2_scaling_configuration" {
+    for_each = var.aurora-postgres.engine_mode == "serverless" ? [1] : []
+
+    content {
+      min_capacity             = var.aurora-postgres.serverless.min_capacity
+      max_capacity             = var.aurora-postgres.serverless.max_capacity
+      seconds_until_auto_pause = var.aurora-postgres.serverless.seconds_until_auto_pause
+    }
+  }
+
   db_subnet_group_name   = aws_db_subnet_group.rds_subnet_group.name
   vpc_security_group_ids = [aws_security_group.aurora-postgres-sg[0].id]
 
@@ -107,14 +130,16 @@ resource "aws_rds_cluster" "aurora-postgres-cluster" {
   master_user_secret_kms_key_id       = aws_kms_key.rds-cmk.id
   iam_database_authentication_enabled = true
 
-  storage_encrypted       = true
-  kms_key_id              = aws_kms_key.rds-cmk.arn
+  storage_encrypted = true
+  kms_key_id        = aws_kms_key.rds-cmk.arn
+
   backup_retention_period = var.aurora-postgres.backup_retention_period
   skip_final_snapshot     = var.aurora-postgres.skip_final_snapshot
   copy_tags_to_snapshot   = var.aurora-postgres.copy_tags_to_snapshot
 
   monitoring_interval             = 60
   monitoring_role_arn             = aws_iam_role.monitoring_role.arn
+  performance_insights_enabled    = var.aurora-postgres.engine_mode == "provisioned" ? !startswith(var.aurora-postgres.provisioned.instance_type, "db.t") : true
   enabled_cloudwatch_logs_exports = var.aurora-postgres.enabled_logs_type
 }
 
@@ -125,13 +150,14 @@ resource "aws_rds_cluster_instance" "aurora-postgres-instance" {
   identifier         = "${var.aurora-postgres.instance_name_prefix}-${count.index}"
   cluster_identifier = aws_rds_cluster.aurora-postgres-cluster[0].id
 
-  instance_class = var.aurora-postgres.instance_type
+  instance_class = var.aurora-postgres.engine_mode == "provisioned" ? var.aurora-postgres.provisioned.instance_type : "db.serverless"
+
   engine         = "aurora-postgresql"
   engine_version = var.aurora-postgres.engine_version
 
   monitoring_interval          = 60
   monitoring_role_arn          = aws_iam_role.monitoring_role.arn
-  performance_insights_enabled = !startswith(var.aurora-postgres.instance_type, "db.t")
+  performance_insights_enabled = var.aurora-postgres.engine_mode == "provisioned" ? !startswith(var.aurora-postgres.provisioned.instance_type, "db.t") : true
 }
 
 resource "aws_security_group" "aurora-postgres-sg" {

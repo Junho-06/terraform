@@ -30,9 +30,21 @@ variable "aurora-mysql" {
 
     engine_version = "8.0"
 
-    port = "3306"
+    engine_mode = "provisioned" # provisioned / serverless
+    provisioned = {
+      instance_type = "db.t3.medium"
+    }
+    serverless = {
+      # 0 ~ 256 (step of 0.5)
+      min_capacity = 0
+      max_capacity = 16
 
-    instance_type = "db.t3.medium"
+      # min capacity가 0일 때만 활성화 가능함 / 0 아니면 이 옵션에서 오류남 / 옵션 비활성화가 불가능해서 minimum = 0 고정 필요
+      # 300 seconds ~ 86400 seconds (24 hours)
+      seconds_until_auto_pause = 43200 # 12 hours
+    }
+
+    port = "3306"
 
     initial_database_name = ""
 
@@ -58,9 +70,21 @@ variable "aurora-postgres" {
 
     engine_version = "16"
 
-    port = "5432"
+    engine_mode = "provisioned" # provisioned / serverless
+    provisioned = {
+      instance_type = "db.t3.medium"
+    }
+    serverless = {
+      # 0 ~ 256 (step of 0.5)
+      min_capacity = 0
+      max_capacity = 16
 
-    instance_type = "db.t3.medium"
+      # min capacity가 0일 때만 활성화 가능함 / 0 아니면 이 옵션에서 오류남 / 옵션 비활성화가 불가능해서 minimum = 0 고정 필요
+      # 300 seconds ~ 86400 seconds (24 hours)
+      seconds_until_auto_pause = 43200 # 12 hours
+    }
+
+    port = "5432"
 
     initial_database_name = ""
 
