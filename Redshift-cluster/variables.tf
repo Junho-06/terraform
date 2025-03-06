@@ -7,7 +7,8 @@ variable "redshift" {
     vpc_cidr            = ""
     database_subnet_ids = ["", ""]
 
-    cluster_name          = "skills-redshift-cluster"
+    cluster_name = "skills-redshift-cluster"
+
     initial_database_name = "skills"
 
     cluster_version = "1.0"
