@@ -39,6 +39,21 @@ resource "aws_redshift_cluster" "cluster" {
 }
 
 
+# Redshift Snapshot Schedule
+# ========================================================
+resource "aws_redshift_snapshot_schedule" "schedule" {
+  identifier = "redshift-cluster-snapshot-schedule-24hours"
+  definitions = [
+    "rate(24 hours)"
+  ]
+}
+
+resource "aws_redshift_snapshot_schedule_association" "schedule-associate" {
+  cluster_identifier  = aws_redshift_cluster.cluster.id
+  schedule_identifier = aws_redshift_snapshot_schedule.schedule.id
+}
+
+
 # Redshift Logging configuration
 # ========================================================
 resource "aws_redshift_logging" "cluster-logging" {
