@@ -1,3 +1,5 @@
+# ECR Repository
+# ========================================================
 resource "aws_ecr_repository" "repository" {
   for_each = var.repositories
 
@@ -14,8 +16,13 @@ resource "aws_ecr_repository" "repository" {
 
   image_tag_mutability = try(each.value.immutable, true) ? "IMMUTABLE" : "MUTABLE"
 }
+
+
+# Basic Scan Config
+# ========================================================
 resource "aws_ecr_registry_scanning_configuration" "basic-scan-configuration" {
-  count     = var.repositories_scan_enhanced ? 0 : 1
+  count = var.repositories_scan_enhanced ? 0 : 1
+
   scan_type = "BASIC"
 
   rule {
@@ -26,8 +33,13 @@ resource "aws_ecr_registry_scanning_configuration" "basic-scan-configuration" {
     }
   }
 }
+
+
+# Enhanced Scan Config
+# ========================================================
 resource "aws_ecr_registry_scanning_configuration" "enhanced-scan-configuration" {
-  count     = var.repositories_scan_enhanced ? 1 : 0
+  count = var.repositories_scan_enhanced ? 1 : 0
+
   scan_type = "ENHANCED"
 
   rule {
@@ -38,7 +50,12 @@ resource "aws_ecr_registry_scanning_configuration" "enhanced-scan-configuration"
     }
   }
 }
+
+
+# CMK
+# ========================================================
 data "aws_caller_identity" "current" {}
+
 resource "aws_kms_key" "ecr-cmk" {
   description             = "ECR CMK"
   enable_key_rotation     = true
@@ -60,6 +77,7 @@ resource "aws_kms_key" "ecr-cmk" {
     ]
   })
 }
+
 resource "aws_kms_alias" "ecr-cmk-alias" {
   name          = "alias/ecr-cmk"
   target_key_id = aws_kms_key.ecr-cmk.id

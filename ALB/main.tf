@@ -1,3 +1,5 @@
+# ALB
+# ========================================================
 resource "aws_lb" "alb" {
   name               = var.alb.name
   internal           = var.alb.internal
@@ -26,6 +28,10 @@ resource "aws_lb" "alb" {
 
   depends_on = [aws_s3_bucket_policy.merged_policy]
 }
+
+
+# ALB Listener
+# ========================================================
 resource "aws_lb_listener" "alb_listener" {
   load_balancer_arn = aws_lb.alb.arn
 
@@ -41,6 +47,10 @@ resource "aws_lb_listener" "alb_listener" {
     }
   }
 }
+
+
+# ALB Target Group
+# ========================================================
 resource "aws_lb_target_group" "alb_target_group" {
 
   name        = var.tg.name
@@ -71,14 +81,20 @@ resource "aws_lb_target_group" "alb_target_group" {
   }
 }
 
+
+# Log Destination S3 Bucket Policy update
+# ========================================================
 data "aws_region" "region" {}
+
 data "aws_s3_bucket_policy" "existing_policy" {
   count = var.alb.accesslog.dest_bucket_has_policy || var.alb.connectionlog.dest_bucket_has_policy ? 1 : 0
 
   bucket = var.alb.accesslog.enabled ? var.alb.accesslog.bucket_name : var.alb.connectionlog.bucket_name
 }
+
 resource "aws_s3_bucket_policy" "merged_policy" {
-  count  = var.alb.accesslog.enabled || var.alb.connectionlog.enabled ? 1 : 0
+  count = var.alb.accesslog.enabled || var.alb.connectionlog.enabled ? 1 : 0
+
   bucket = var.alb.accesslog.enabled == true && var.alb.accesslog.bucket_name != "" ? var.alb.accesslog.bucket_name : var.alb.connectionlog.bucket_name
 
   policy = jsonencode({
@@ -100,25 +116,36 @@ resource "aws_s3_bucket_policy" "merged_policy" {
     )
   })
 }
+
+
+# Security Group
+# ========================================================
 resource "aws_security_group" "alb-sg" {
-  name   = "${var.alb.name}-sg"
+  name = "${var.alb.name}-sg"
+
   vpc_id = var.tg.vpc_id
+
   ingress {
     from_port   = var.alb.listener_port
     to_port     = var.alb.listener_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   tags = {
     Name = "${var.alb.name}-sg"
   }
 }
+
+
+# ALB Root Account ID Variable
 locals {
   elb_service_accounts = {
     us-east-1      = "127311923021"

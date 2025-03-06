@@ -1,3 +1,5 @@
+# Bucket
+# ========================================================
 resource "aws_s3_bucket" "bucket" {
   for_each = var.buckets
 
@@ -6,6 +8,10 @@ resource "aws_s3_bucket" "bucket" {
 
   object_lock_enabled = each.value.object_lock_enabled
 }
+
+
+# Bucket Ownership
+# ========================================================
 resource "aws_s3_bucket_ownership_controls" "ownership" {
   for_each = var.buckets
 
@@ -14,6 +20,10 @@ resource "aws_s3_bucket_ownership_controls" "ownership" {
     object_ownership = each.value.object_ownership
   }
 }
+
+
+# Bucket ACL
+# ========================================================
 resource "aws_s3_bucket_acl" "acl" {
   for_each = {
     for k, v in var.buckets : k => v
@@ -24,6 +34,10 @@ resource "aws_s3_bucket_acl" "acl" {
   bucket = aws_s3_bucket.bucket[each.key].id
   acl    = each.value.acl
 }
+
+
+# Bucket Public Access control
+# ========================================================
 resource "aws_s3_bucket_public_access_block" "public_access" {
   for_each = var.buckets
 
@@ -34,6 +48,10 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
   ignore_public_acls      = each.value.public_access_deny
   restrict_public_buckets = each.value.public_access_deny
 }
+
+
+# Bucket Versioning
+# ========================================================
 resource "aws_s3_bucket_versioning" "versioning" {
   for_each = var.buckets
 
@@ -43,6 +61,10 @@ resource "aws_s3_bucket_versioning" "versioning" {
     status = each.value.enable_bucket_versioning ? "Enabled" : "Disabled"
   }
 }
+
+
+# Bucket Encryption
+# ========================================================
 resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   for_each = var.buckets
 
@@ -56,6 +78,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
     bucket_key_enabled = true
   }
 }
+
+
+# Bucket Transfer Accelerate
+# ========================================================
 resource "aws_s3_bucket_accelerate_configuration" "accelerate" {
   for_each = var.buckets
 
@@ -65,6 +91,10 @@ resource "aws_s3_bucket_accelerate_configuration" "accelerate" {
 
   depends_on = [aws_s3_bucket.bucket]
 }
+
+
+# Bucket Lifecycle
+# ========================================================
 resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
   for_each = var.buckets
 
@@ -84,6 +114,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
   }
   depends_on = [aws_s3_bucket.bucket]
 }
+
+
+# Bucket Intelligent Tiering
+# ========================================================
 resource "aws_s3_bucket_intelligent_tiering_configuration" "intelligent_tiering" {
   for_each = var.buckets
 
@@ -103,10 +137,8 @@ resource "aws_s3_bucket_intelligent_tiering_configuration" "intelligent_tiering"
 }
 
 
-
-# ===========================================
-# ================= Logging =================
-# ===========================================
+# Bucket Logging destination bucket policy update
+# ========================================================
 data "aws_s3_bucket_policy" "existing_policy" {
   for_each = {
     for k, v in var.buckets : k => v
@@ -153,6 +185,9 @@ resource "aws_s3_bucket_policy" "access_log_policy" {
   depends_on = [aws_s3_bucket.bucket]
 }
 
+
+# Bucket Logging
+# ========================================================
 resource "aws_s3_bucket_logging" "accesslog" {
   for_each = {
     for k, v in var.buckets : k => v
@@ -169,13 +204,12 @@ resource "aws_s3_bucket_logging" "accesslog" {
 data "aws_caller_identity" "current" {}
 
 
-
-# ===========================================
-# =================== CMK ===================
-# ===========================================
+# CMK
+# ========================================================
 resource "aws_kms_key" "s3-cmk" {
   description             = "S3 CMK"
   enable_key_rotation     = true
+  rotation_period_in_days = 90
   deletion_window_in_days = 7
   policy = jsonencode({
     Version = "2012-10-17"
@@ -193,6 +227,7 @@ resource "aws_kms_key" "s3-cmk" {
     ]
   })
 }
+
 resource "aws_kms_alias" "s3-cmk-alias" {
   name          = "alias/s3-cmk"
   target_key_id = aws_kms_key.s3-cmk.id

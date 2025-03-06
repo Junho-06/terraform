@@ -1,9 +1,15 @@
+# Method Local Variable
+# ========================================================
 locals {
   methods = {
     GET  = ["GET", "HEAD"]
     POST = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
   }
 }
+
+
+# CloudFront Distribution
+# ========================================================
 resource "aws_cloudfront_distribution" "cf" {
   enabled = true
 
@@ -76,6 +82,10 @@ resource "aws_cloudfront_distribution" "cf" {
 
   default_root_object = try(var.cf.default_root_object, null)
 }
+
+
+# Origin Access Control (OAC)
+# ========================================================
 resource "aws_cloudfront_origin_access_control" "oac" {
   for_each = var.cf.s3_origins
 
