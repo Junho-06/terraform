@@ -127,8 +127,7 @@ resource "aws_rds_cluster" "secondary-cluster" {
   }
 
   depends_on = [
-    aws_rds_cluster.primary-cluster,
-    aws_rds_cluster_instance.primary-instance
+    aws_rds_cluster.primary-cluster
   ]
 }
 
