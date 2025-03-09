@@ -41,7 +41,7 @@ resource "aws_redshiftserverless_workgroup" "workgroup" {
 # Redshift Default IAM Role
 # ========================================================
 resource "aws_iam_role" "redshift-role" {
-  name = "AmazonRedshift-Default-IAM-Role"
+  name = "${var.redshift.namespace_name}-AmazonRedshift-Default-IAM-Role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -62,7 +62,7 @@ resource "aws_iam_role" "redshift-role" {
 }
 
 resource "aws_iam_policy" "redshift-s3-policy" {
-  name        = "AmazonRedshift-to-Any-S3-Policy"
+  name        = "${var.redshift.namespace_name}-AmazonRedshift-to-Any-S3-Policy"
   description = "AmazonRedshift to Any S3 Policy"
 
   policy = jsonencode({

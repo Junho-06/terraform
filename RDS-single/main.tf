@@ -248,7 +248,7 @@ data "aws_iam_policy_document" "monitoring_assume_role_policy" {
 }
 
 resource "aws_iam_role" "monitoring_role" {
-  name               = "rds-monitoring-role"
+  name               = "${var.region}-rds-monitoring-role"
   assume_role_policy = data.aws_iam_policy_document.monitoring_assume_role_policy.json
 }
 
@@ -268,7 +268,7 @@ resource "aws_iam_role_policy_attachments_exclusive" "delete-iam-policy" {
 # RDS Subnet Group
 # ========================================================
 resource "aws_db_subnet_group" "rds_subnet_group" {
-  name        = "rds-subnet-group"
-  description = "rds subnet group"
+  name        = "${var.region}-rds-subnet-group"
+  description = "${var.region}-rds subnet group"
   subnet_ids  = var.network.database_subnet_ids
 }

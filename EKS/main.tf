@@ -165,7 +165,7 @@ resource "aws_eks_addon" "eks-addon" {
 # Cluster IAM Role
 # ========================================================
 resource "aws_iam_role" "eks-cluster-role" {
-  name = "EKSClusterRole"
+  name = "${var.cluster.name}-EKSClusterRole"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -234,7 +234,7 @@ resource "aws_iam_role_policy_attachments_exclusive" "cluster_policy_delete" {
 # Nodegroup IAM Role
 # ========================================================
 resource "aws_iam_role" "node-group-role" {
-  name = "EKSNodegroupRole"
+  name = "${var.cluster.name}-EKSNodegroupRole"
 
   assume_role_policy = jsonencode({
     Statement = [{
@@ -284,7 +284,7 @@ resource "aws_iam_role_policy_attachments_exclusive" "node-group-policy-delete" 
 resource "aws_iam_role" "fargate-role" {
   count = var.cluster.create_fargate_profile == true ? 1 : 0
 
-  name = "eks-fargate-profile-role"
+  name = "${var.cluster.name}-eks-fargate-profile-role"
 
   assume_role_policy = jsonencode({
     Statement = [{
