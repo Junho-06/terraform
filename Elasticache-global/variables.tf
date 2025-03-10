@@ -18,7 +18,7 @@ variable "network" {
     secondary_network = {
       vpc_id              = ""
       vpc_cidr            = ""
-      database_subnet_ids = ["s", ""]
+      database_subnet_ids = ["", ""]
     }
   }
 }
