@@ -12,9 +12,7 @@ output "dynamodb" {
 
     PITR = var.dynamodb.PITR_enable
 
-    Primary_CMK_ID    = aws_kms_key.dynamodb-cmk.id
     Primary_CMK_ARN   = aws_kms_key.dynamodb-cmk.arn
-    Secondary_CMK_ID  = aws_kms_replica_key.dynamodb-replica-cmk.key_id
     Secondary_CMK_ARN = aws_kms_replica_key.dynamodb-replica-cmk.arn
   }
 }
