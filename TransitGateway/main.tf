@@ -1,3 +1,5 @@
+# Transit Gateway
+# ========================================================
 resource "aws_ec2_transit_gateway" "tgw" {
   tags = {
     Name = var.tgw.tgw_name
@@ -15,6 +17,9 @@ resource "aws_ec2_transit_gateway" "tgw" {
   vpn_ecmp_support                   = var.tgw.vpn_ecmp_support
 }
 
+
+# Transit Gateway VPC Attachment
+# ========================================================
 resource "aws_ec2_transit_gateway_vpc_attachment" "vpc-attach" {
   for_each = var.tgw.vpc_information
 
@@ -31,6 +36,9 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "vpc-attach" {
   }
 }
 
+
+# Transit Gateway Route table
+# ========================================================
 resource "aws_ec2_transit_gateway_route_table" "tgw-rt" {
   for_each = var.tgw.tgw_route_table
 
@@ -40,6 +48,9 @@ resource "aws_ec2_transit_gateway_route_table" "tgw-rt" {
   }
 }
 
+
+# Transit Gateway Route table Attachment associate
+# ========================================================
 resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-associate" {
   for_each = var.tgw.tgw_route_table
 
@@ -47,6 +58,9 @@ resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-associate" {
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw-rt[each.key].id
 }
 
+
+# Transit Gateway Route table route
+# ========================================================
 resource "aws_ec2_transit_gateway_route" "route" {
   for_each = var.tgw.tgw_route
 
@@ -55,6 +69,9 @@ resource "aws_ec2_transit_gateway_route" "route" {
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw-rt[each.value.tgw_rt_name].id
 }
 
+
+# VPC Route table route
+# ========================================================
 resource "aws_route" "vpc_routes" {
   for_each = merge([
     for rt_key, rt in var.tgw.vpc_route : {
