@@ -5,7 +5,7 @@ variable "cluster" {
   default = {
     region = "ap-northeast-2"
 
-    name    = "skills-cluster"
+    name    = ""
     version = "1.31"
 
     authentication_mode                        = "API_AND_CONFIG_MAP" # CONFIG_MAP, API, API_AND_CONFIG_MAP
@@ -14,6 +14,8 @@ variable "cluster" {
     vpc_id             = ""
     vpc_cidr           = ""
     private_subnet_ids = ["", ""]
+
+    add_karpenter_tag_to_subnet = true
 
     cluster_endpoint_private_access      = true # 2개 다 true로 설정시 private and public
     cluster_endpoint_public_access       = false
@@ -36,8 +38,8 @@ variable "cluster" {
 
     node_group = {
       node_group_1 = {
-        node_group_name = "skills-worker-ng"
-        worker_ec2_name = "skills-worker-node"
+        node_group_name    = ""
+        node_instance_name = ""
 
         imds_v2_mode            = "required" # required, optional
         imds_v2_token_hop_limit = 2
@@ -67,7 +69,7 @@ variable "cluster" {
 
     create_fargate_profile = false
     fargate_profile = {
-      name = "skills-fargate"
+      name = ""
 
       namespaces = ["test", "custom", "no-label"]
 

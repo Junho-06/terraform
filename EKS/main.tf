@@ -105,7 +105,7 @@ resource "aws_launch_template" "eks-worker-node-lt" {
     resource_type = "instance"
 
     tags = {
-      "Name" = each.value.worker_ec2_name
+      "Name" = each.value.node_instance_name
     }
   }
 
@@ -495,4 +495,12 @@ resource "aws_ec2_tag" "add_subnet_tags" {
   resource_id = each.value
   key         = "kubernetes.io/cluster/${var.cluster.name}"
   value       = "owned"
+}
+
+resource "aws_ec2_tag" "add_karpenter_tag" {
+  for_each = var.cluster.add_karpenter_tag_to_subnet ? toset(var.cluster.private_subnet_ids) : []
+
+  resource_id = each.value
+  key         = "karpenter.sh/discovery"
+  value       = var.cluster.name
 }
