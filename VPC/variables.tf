@@ -21,8 +21,9 @@ variable "vpc" {
         "a" = "10.0.0.0/24"
         "b" = "10.0.1.0/24"
       }
-      internet_gateway_name   = "skills-igw"
-      public_route_table_name = "skills-public-rt"
+      internet_gateway_name                     = "skills-igw"
+      public_route_table_name                   = "skills-public-rt"
+      public_subnet_loadbalancer_controller_tag = true
     }
 
     create_private_subnets = true
@@ -44,9 +45,10 @@ variable "vpc" {
         "a" = "skills-private-rt-a"
         "b" = "skills-private-rt-b"
       }
+      private_subnet_loadbalancer_controller_tag = true
     }
 
-    create_database_subnets = true
+    create_database_subnets = false
     database = {
       database_subnet_azs = ["a", "b"]
       database_subnet_names = {
@@ -68,7 +70,7 @@ variable "vpc" {
     }
 
     flowlog = {
-      vpc_flowlog_to_cloudwatch_enable = true
+      vpc_flowlog_to_cloudwatch_enable = false
       flowlog_traffic_type             = "ALL" # "ALL", "ACCEPT", "REJECT"
       flowlog_log_group_name           = "skills-vpc-flowlog-log-group"
       flowlog_max_aggregation_interval = 60 # 60s or 600s
@@ -76,10 +78,11 @@ variable "vpc" {
     }
 
     endpoint = {
+      create_endpoint_sg               = false # if create interface endpoint => true
       vpc_endpoint_security_group_name = "skills-endpoint-sg"
       service_names = [
-        "s3",
-        "dynamodb",
+        # "s3", # Gateway
+        # "dynamodb", # Gateway
         # "sts",
         # "ecr.api",
         # "ecr.dkr",

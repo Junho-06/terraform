@@ -21,9 +21,14 @@ resource "aws_subnet" "public_subnets" {
   cidr_block        = var.vpc.public.public_subnet_cidrs[var.vpc.public.public_subnet_azs[count.index]]
   availability_zone = "${var.vpc.region}${var.vpc.public.public_subnet_azs[count.index]}"
 
-  tags = {
-    Name = var.vpc.public.public_subnet_names[var.vpc.public.public_subnet_azs[count.index]]
-  }
+  tags = merge(
+    {
+      Name = var.vpc.public.public_subnet_names[var.vpc.public.public_subnet_azs[count.index]]
+    },
+    var.vpc.public.public_subnet_loadbalancer_controller_tag == true ? {
+      "kubernetes.io/role/elb" = "1"
+    } : {}
+  )
 
   map_public_ip_on_launch                     = true
   enable_resource_name_dns_a_record_on_launch = true
@@ -75,9 +80,14 @@ resource "aws_subnet" "private_subnets" {
   cidr_block        = var.vpc.private.private_subnet_cidrs[var.vpc.private.private_subnet_azs[count.index]]
   availability_zone = "${var.vpc.region}${var.vpc.private.private_subnet_azs[count.index]}"
 
-  tags = {
-    Name = var.vpc.private.private_subnet_names[var.vpc.private.private_subnet_azs[count.index]]
-  }
+  tags = merge(
+    {
+      Name = var.vpc.private.private_subnet_names[var.vpc.private.private_subnet_azs[count.index]]
+    },
+    var.vpc.private.private_subnet_loadbalancer_controller_tag == true ? {
+      "kubernetes.io/role/internal-elb" = "1"
+    } : {}
+  )
 
   enable_resource_name_dns_a_record_on_launch = true
 }
@@ -265,6 +275,7 @@ resource "aws_flow_log" "vpc-flowlog" {
 # Endpoint
 # ========================================================
 resource "aws_security_group" "vpc-endpoint-sg" {
+  count = var.vpc.endpoint.create_endpoint_sg == true ? 1 : 0
 
   name   = var.vpc.endpoint.vpc_endpoint_security_group_name
   vpc_id = aws_vpc.vpc.id
@@ -330,7 +341,7 @@ resource "aws_vpc_endpoint" "interface_endpoint" {
 
   private_dns_enabled = true
   subnet_ids          = try(aws_subnet.private_subnets[*].id, null)
-  security_group_ids  = [aws_security_group.vpc-endpoint-sg.id]
+  security_group_ids  = [aws_security_group.vpc-endpoint-sg[0].id]
 
   tags = {
     Name = "${var.vpc.vpc_name}-${each.key}-endpoint"
