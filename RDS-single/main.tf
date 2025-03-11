@@ -27,8 +27,9 @@ resource "aws_rds_cluster" "aurora-mysql-cluster" {
   database_name = try(var.aurora-mysql.initial_database_name, null)
 
   master_username                     = var.aurora-mysql.master_username
-  manage_master_user_password         = true
-  master_user_secret_kms_key_id       = aws_kms_key.rds-cmk.id
+  manage_master_user_password         = var.aurora-mysql.manage_master_user_password ? var.aurora-mysql.manage_master_user_password : null
+  master_user_secret_kms_key_id       = var.aurora-mysql.manage_master_user_password ? aws_kms_key.rds-cmk.id : null
+  master_password                     = var.aurora-mysql.manage_master_user_password ? null : var.aurora-mysql.master_password
   iam_database_authentication_enabled = true
 
   storage_encrypted = true
@@ -91,12 +92,12 @@ resource "aws_security_group" "aurora-mysql-sg" {
 }
 
 data "aws_secretsmanager_secret" "mysql_secrets" {
-  count = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
+  count = var.db_engine.create_aurora_mysql_cluster == true && var.aurora-mysql.manage_master_user_password == true ? 1 : 0
   arn   = aws_rds_cluster.aurora-mysql-cluster[0].master_user_secret[0].secret_arn
 }
 
 data "aws_secretsmanager_secret_version" "mysql_secrets_current" {
-  count     = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
+  count     = var.db_engine.create_aurora_mysql_cluster == true && var.aurora-mysql.manage_master_user_password == true ? 1 : 0
   secret_id = data.aws_secretsmanager_secret.mysql_secrets[0].id
 }
 
@@ -130,8 +131,9 @@ resource "aws_rds_cluster" "aurora-postgres-cluster" {
   database_name = try(var.aurora-postgres.initial_database_name, null)
 
   master_username                     = var.aurora-postgres.master_username
-  manage_master_user_password         = true
-  master_user_secret_kms_key_id       = aws_kms_key.rds-cmk.id
+  manage_master_user_password         = var.aurora-postgres.manage_master_user_password ? var.aurora-postgres.manage_master_user_password : null
+  master_user_secret_kms_key_id       = var.aurora-postgres.manage_master_user_password ? aws_kms_key.rds-cmk.id : null
+  master_password                     = var.aurora-postgres.manage_master_user_password ? null : var.aurora-postgres.master_password
   iam_database_authentication_enabled = true
 
   storage_encrypted = true

@@ -13,9 +13,9 @@ variable "region" {
 variable "network" {
   type = any
   default = {
-    vpc_id              = ""
-    vpc_cidr            = ""
-    database_subnet_ids = ["", ""]
+    vpc_id              = "vpc-0758ccee65cbf9395"
+    vpc_cidr            = "10.0.0.0/16"
+    database_subnet_ids = ["subnet-03ce5dbc62a178ae2", "subnet-025c642304dd06ce9"]
   }
 }
 
@@ -48,12 +48,16 @@ variable "aurora-mysql" {
 
     initial_database_name = ""
 
-    master_username = "skillsadmin"
+    master_username             = "skillsadmin"
+    manage_master_user_password = true
+    master_password             = "skillspassword" # password는 manage_master_user_password가 false일 때만 사용
 
     backup_retention_period = 7
     skip_final_snapshot     = true
     copy_tags_to_snapshot   = true
 
+    # seconds * minutes * hours
+    # if you want 4 hour => 60 * 60 * 4, if you want 30 minute => 60 * 30
     backtrack_window = 60 * 60 * 24
 
     enabled_logs_type = ["error", "general", "slowquery", "audit", "iam-db-auth-error"]
@@ -88,7 +92,9 @@ variable "aurora-postgres" {
 
     initial_database_name = ""
 
-    master_username = "skillsadmin"
+    master_username             = "skillsadmin"
+    manage_master_user_password = true
+    master_password             = "skillspassword" # password는 manage_master_user_password가 false일 때만 사용
 
     backup_retention_period = 7
     skip_final_snapshot     = true
