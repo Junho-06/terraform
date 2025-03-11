@@ -1,10 +1,13 @@
+variable "region" {
+  type    = any
+  default = "ap-northeast-2"
+}
+
 variable "buckets" {
-  type        = map(any)
+  type        = any
   description = "Map for S3 buckets"
 
   default = {
-    region = "ap-northeast-2"
-
     bucket1 = {
       name                = ""
       object_lock_enabled = false

@@ -10,7 +10,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.buckets.region
+  region = var.region
   default_tags {
     tags = {
       "project" = "skills"
