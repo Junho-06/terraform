@@ -16,6 +16,14 @@ resource "aws_instance" "bastion" {
   tags = {
     Name = var.ec2.name
   }
+
+  user_data = var.ec2.ssh-port != 22 ? join("\n", [
+    "#!/bin/bash",
+    "sed -i 's/^#Port 22/Port ${var.ec2.ssh-port}/' /etc/ssh/sshd_config",
+    "sed -i 's/^Port 22/Port ${var.ec2.ssh-port}/' /etc/ssh/sshd_config",
+    "systemctl daemon-reload",
+    "systemctl restart ${startswith(var.ec2.ec2_ami, "Amazon Linux") == true ? "sshd" : "ssh"}"
+  ]) : null
 }
 
 
