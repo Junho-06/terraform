@@ -27,7 +27,7 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "vpc-attach" {
   security_group_referencing_support = var.tgw.security_group_referencing_support
 
   tags = {
-    Name = each.value.attach_name
+    Name = each.value.tgw_attachment_name
   }
 }
 
@@ -48,9 +48,25 @@ resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-associate" {
 }
 
 resource "aws_ec2_transit_gateway_route" "route" {
-  for_each = var.tgw.route
+  for_each = var.tgw.tgw_route
 
   destination_cidr_block         = each.value.dest_cidr
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.vpc-attach[each.value.dest_vpc_name].id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw-rt[each.value.tgw_rt_name].id
+}
+
+resource "aws_route" "vpc_routes" {
+  for_each = merge([
+    for rt_key, rt in var.tgw.vpc_route : {
+      for cidr in rt.dest_cidr :
+      "${rt.route_table_id}-${cidr}" => {
+        route_table_id = rt.route_table_id
+        dest_cidr      = cidr
+      }
+    }
+  ]...)
+
+  route_table_id         = each.value.route_table_id
+  destination_cidr_block = each.value.dest_cidr
+  transit_gateway_id     = aws_ec2_transit_gateway.tgw.id
 }
