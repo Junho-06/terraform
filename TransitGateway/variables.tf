@@ -45,38 +45,22 @@ variable "tgw" {
       }
     }
 
+    # Key Name이 TGW Route Table Name 이어야 함
     tgw_route = {
-      route1 = {
-        tgw_rt_name   = "wsc2024-ma-tgw-rt"
-        dest_vpc_name = "wsc2024-prod-vpc"
-        dest_cidr     = "172.16.0.0/16"
+      wsc2024-ma-tgw-rt = {
+        dest_vpc_names = ["wsc2024-prod-vpc", "wsc2024-storage-vpc"]
+        dest_cidrs     = ["172.16.0.0/16", "192.168.0.0/16"]
       },
-      route2 = {
-        tgw_rt_name   = "wsc2024-ma-tgw-rt"
-        dest_vpc_name = "wsc2024-storage-vpc"
-        dest_cidr     = "192.168.0.0/16"
+      wsc2024-prod-tgw-rt = {
+        dest_vpc_names = ["wsc2024-ma-vpc", "wsc2024-storage-vpc"]
+        dest_cidrs     = ["10.0.0.0/16", "192.168.0.0/16"]
       },
-      route3 = {
-        tgw_rt_name   = "wsc2024-prod-tgw-rt"
-        dest_vpc_name = "wsc2024-ma-vpc"
-        dest_cidr     = "10.0.0.0/16"
-      },
-      route4 = {
-        tgw_rt_name   = "wsc2024-prod-tgw-rt"
-        dest_vpc_name = "wsc2024-storage-vpc"
-        dest_cidr     = "192.168.0.0/16"
-      },
-      route5 = {
-        tgw_rt_name   = "wsc2024-storage-tgw-rt"
-        dest_vpc_name = "wsc2024-ma-vpc"
-        dest_cidr     = "10.0.0.0/16"
-      },
-      route6 = {
-        tgw_rt_name   = "wsc2024-storage-tgw-rt"
-        dest_vpc_name = "wsc2024-prod-vpc"
-        dest_cidr     = "172.16.0.0/16"
+      wsc2024-storage-tgw-rt = {
+        dest_vpc_names = ["wsc2024-ma-vpc", "wsc2024-prod-vpc"]
+        dest_cidrs     = ["10.0.0.0/16", "172.16.0.0/16"]
       }
     }
+
 
     vpc_route = {
       rt1 = {

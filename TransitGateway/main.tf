@@ -62,7 +62,16 @@ resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-associate" {
 # Transit Gateway Route table route
 # ========================================================
 resource "aws_ec2_transit_gateway_route" "route" {
-  for_each = var.tgw.tgw_route
+  for_each = { for pair in flatten([
+    for tgw_rt_name, route in var.tgw.tgw_route : [
+      for i, dest_cidr in route.dest_cidrs : {
+        id            = "${tgw_rt_name}-${route.dest_vpc_names[i]}-${dest_cidr}"
+        tgw_rt_name   = tgw_rt_name
+        dest_vpc_name = route.dest_vpc_names[i]
+        dest_cidr     = dest_cidr
+      }
+    ]
+  ]) : pair.id => pair }
 
   destination_cidr_block         = each.value.dest_cidr
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.vpc-attach[each.value.dest_vpc_name].id
