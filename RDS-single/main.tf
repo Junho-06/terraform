@@ -67,8 +67,8 @@ resource "aws_rds_cluster_instance" "aurora-mysql-instance" {
 resource "aws_security_group" "aurora-mysql-sg" {
   count = var.db_engine.create_aurora_mysql_cluster == true ? 1 : 0
 
-  name        = "aurora-mysql-sg"
-  description = "aurora mysql security group"
+  name        = "${var.aurora-mysql.cluster_name}-aurora-mysql-sg"
+  description = "${var.aurora-mysql.cluster_name} aurora mysql security group"
 
   vpc_id = var.network.vpc_id
 
@@ -87,7 +87,7 @@ resource "aws_security_group" "aurora-mysql-sg" {
   }
 
   tags = {
-    Name = "aurora-mysql-sg"
+    Name = "${var.aurora-mysql.cluster_name}-aurora-mysql-sg"
   }
 }
 
@@ -169,8 +169,8 @@ resource "aws_rds_cluster_instance" "aurora-postgres-instance" {
 resource "aws_security_group" "aurora-postgres-sg" {
   count = var.db_engine.create_aurora_postgres_cluster == true ? 1 : 0
 
-  name        = "aurora-postgres-sg"
-  description = "aurora postgres security group"
+  name        = "${var.aurora-postgres.cluster_name}-aurora-postgres-sg"
+  description = "${var.aurora-postgres.cluster_name} aurora postgres security group"
 
   vpc_id = var.network.vpc_id
 
@@ -189,7 +189,7 @@ resource "aws_security_group" "aurora-postgres-sg" {
   }
 
   tags = {
-    Name = "aurora-postgres-sg"
+    Name = "${var.aurora-postgres.cluster_name}-aurora-postgres-sg"
   }
 }
 
